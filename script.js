@@ -54,6 +54,7 @@ const lootTables = {
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
 const categoriesList = ["patron", "race", "class", "motivation"];
 
+// Clean fallback definitions to keep buttons unlocked if the database is brand new
 let serverStates = {
     Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true,
     cat_patron: true, cat_race: true, cat_class: true, cat_motivation: true
@@ -66,7 +67,9 @@ function switchTab(viewId) {
     document.querySelectorAll('.tab-content-view').forEach(view => view.classList.add('hidden'));
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active-tab'));
     
-    document.getElementById(viewId).classList.remove('hidden');
+    const targetView = document.getElementById(viewId);
+    if (targetView) targetView.classList.remove('hidden');
+    
     if (viewId === 'loot-view') document.getElementById('tab-loot-btn').classList.add('active-tab');
     if (viewId === 'dice-view') document.getElementById('tab-dice-btn').classList.add('active-tab');
 }
@@ -80,15 +83,12 @@ function selectDieType(sides) {
     selectedDieSides = sides;
     document.querySelectorAll('.dice-select-btn').forEach(btn => btn.classList.remove('active-die'));
     
-    // SAFE IMPLEMENTATION: Uses modern element matching instead of a raw event handle
-    const targetButton = Array.from(document.querySelectorAll('.dice-select-btn'))
-        .find(btn => btn.textContent === `d${sides}`);
-        
+    const allButtons = Array.from(document.querySelectorAll('.dice-select-btn'));
+    const targetButton = allButtons.find(btn => btn.textContent === `d${sides}`);
     if (targetButton) {
         targetButton.classList.add('active-die');
     }
 }
-
 
 function rollDiceEngine() {
     const countInput = document.getElementById('dice-count');
@@ -130,7 +130,7 @@ function rollDiceEngine() {
 }
 
 // ==========================================
-// 📦 LOOT BOX SELECTION CONNECTIONS
+// 📦 LOOT BOX ELEMENT SELECTORS
 // ==========================================
 const categorySelect = document.getElementById('category-select');
 const subCategorySelect = document.getElementById('sub-category-select');
@@ -164,6 +164,7 @@ const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select
 const nameMapping = { patron: "Patron (Race Homeworld)", race: "Your Character Race", class: "Character Class", motivation: "Character Motivation" };
 
 function updateCategoryDropdownOptions() {
+    if (!categorySelect) return;
     const currentSelection = categorySelect.value;
     categorySelect.innerHTML = "";
     let activeCategoriesCount = 0;
@@ -183,24 +184,26 @@ function updateCategoryDropdownOptions() {
         opt.value = "none"; 
         opt.textContent = "⚠️ All Options Locked by DM";
         categorySelect.appendChild(opt);
-        subCategorySelect.innerHTML = "";
-        subCategoryLabel.textContent = "Locked Element Handler:";
-        spinBtn.disabled = true;
+        if (subCategorySelect) subCategorySelect.innerHTML = "";
+        if (subCategoryLabel) subCategoryLabel.textContent = "Locked Element Handler:";
+        if (spinBtn) spinBtn.disabled = true;
         return;
     }
 
     if (serverStates[`cat_${currentSelection}`] !== false && currentSelection !== "") {
         categorySelect.value = currentSelection;
     }
-    updateSubCategories();
+        updateSubCategories();
 }
 
 function updateSubCategories() {
+    if (!categorySelect || !subCategorySelect || !subCategoryLabel) return;
     const selectedCategory = categorySelect.value;
     if (selectedCategory === "none" || !subCategories[selectedCategory]) {
-        subCategorySelect.innerHTML = ""; 
+        subCategorySelect.innerHTML = "";
         return;
     }
+    
     subCategoryLabel.textContent = labelMapping[selectedCategory];
     subCategorySelect.innerHTML = "";
     
@@ -214,6 +217,7 @@ function updateSubCategories() {
 }
 
 function checkActiveTierStatus() {
+    if (!categorySelect || !tierSelect || !spinBtn || !lockoutNotice) return;
     if (categorySelect.value === "none") {
         spinBtn.disabled = true;
         return;
@@ -237,7 +241,8 @@ function syncFromCloudDatabase() {
     fetch(DATABASE_API_URL)
         .then(res => res.json())
         .then(data => {
-            if (data) {
+            // SAFETY FILTER: Only apply values if the database actually has data in it
+            if (data && typeof data === 'object' && Object.keys(data).length > 0) {
                 serverStates = data;
                 tierList.forEach(t => {
                     const cb = document.getElementById(`sw-${t}`);
@@ -249,7 +254,7 @@ function syncFromCloudDatabase() {
                 });
                 updateCategoryDropdownOptions();
             }
-        }).catch(err => console.log("Database read error:", err));
+        }).catch(err => console.log("Database offline or empty fallback active:", err));
 }
 
 function pushLockoutStateToCloud() {
@@ -282,6 +287,7 @@ function spinLootBox() {
     spinBtn.disabled = true;
     lootDisplayContainer.classList.add('hidden');
     placeholderText.classList.remove('hidden');
+    placeholderText.textContent = "Unboxing crate...";
     
     scroller.innerHTML = "";
     scroller.style.transition = "none";
@@ -290,7 +296,7 @@ function spinLootBox() {
     const totalItemsCount = 30;
     const winningIndex = 25;
     scroller.offsetHeight;
-
+    
     for (let i = 0; i < totalItemsCount; i++) {
         let displayItem, displayTier;
         if (i === winningIndex) {
@@ -301,6 +307,7 @@ function spinLootBox() {
             const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
             displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
         }
+        
         const slot = document.createElement('div');
         slot.className = `carousel-item border-${displayTier}`;
         
@@ -346,64 +353,78 @@ function getFillerItemPool(cat, sub, tier) {
 // ==========================================
 // 🛡️ SECURITY MODULE AND DRAGGABLE ACTIONS
 // ==========================================
-adminTriggerBtn.addEventListener('click', () => {
-    loginModal.classList.remove('hidden');
-    loginStatusMsg.className = "status-msg";
-    loginStatusMsg.textContent = "";
-    adminIdInput.value = "";
-    adminPassInput.value = "";
-});
+if (adminTriggerBtn) {
+    adminTriggerBtn.addEventListener('click', () => {
+        loginModal.classList.remove('hidden');
+        loginStatusMsg.className = "status-msg";
+        loginStatusMsg.textContent = "";
+        adminIdInput.value = "";
+        adminPassInput.value = "";
+    });
+}
 
-loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
+if (loginCancelBtn) loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
 
-loginSubmitBtn.addEventListener('click', () => {
-    const enteredID = adminIdInput.value.trim();
-    const enteredPass = adminPassInput.value.trim();
-    if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
-        loginStatusMsg.className = "status-msg status-success";
-        loginStatusMsg.textContent = "Successful, logging in...";
-        setTimeout(() => {
-            loginModal.classList.add('hidden');
-            adminPanel.classList.remove('hidden');
-            adminPanel.style.top = "100px";
-            adminPanel.style.right = "50px";
-            adminPanel.style.left = "auto";
-        }, 1200);
-    } else {
-        loginStatusMsg.className = "status-msg status-error";
-        loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
+if (loginSubmitBtn) {
+    loginSubmitBtn.addEventListener('click', () => {
+        const enteredID = adminIdInput.value.trim();
+        const enteredPass = adminPassInput.value.trim();
+        
+        if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
+            loginStatusMsg.className = "status-msg status-success";
+            loginStatusMsg.textContent = "Successful, logging in...";
+            
+            setTimeout(() => {
+                loginModal.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                adminPanel.style.top = "100px";
+                adminPanel.style.right = "50px";
+                adminPanel.style.left = "auto";
+            }, 1200);
+        } else {
+            loginStatusMsg.className = "status-msg status-error";
+            loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
+        }
+    });
+}
+
+if (closePanelBtn) closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
+
+tierList.forEach(t => {
+    const el = document.getElementById(`sw-${t}`);
+    if (el) {
+        el.addEventListener('change', (e) => {
+            serverStates[t] = e.target.checked;
+            pushLockoutStateToCloud();
+            checkActiveTierStatus();
+        });
     }
 });
 
-closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
-
-tierList.forEach(t => {
-    document.getElementById(`sw-${t}`).addEventListener('change', (e) => {
-        serverStates[t] = e.target.checked;
-        pushLockoutStateToCloud();
-        checkActiveTierStatus();
-    });
-});
-
 categoriesList.forEach(c => {
-    document.getElementById(`sw-cat-${c}`).addEventListener('change', (e) => {
-        serverStates[`cat_${c}`] = e.target.checked;
-        pushLockoutStateToCloud();
-        updateCategoryDropdownOptions();
-    });
+    const el = document.getElementById(`sw-cat-${c}`);
+    if (el) {
+        el.addEventListener('change', (e) => {
+            serverStates[`cat_${c}`] = e.target.checked;
+            pushLockoutStateToCloud();
+            updateCategoryDropdownOptions();
+        });
+    }
 });
 
 let isDragging = false;
 let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
 
-adminPanelHeader.addEventListener('mousedown', (e) => {
-    initialX = e.clientX - xOffset;
-    initialY = e.clientY - yOffset;
-    if (e.target === adminPanelHeader) isDragging = true;
-});
+if (adminPanelHeader) {
+    adminPanelHeader.addEventListener('mousedown', (e) => {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+        if (e.target === adminPanelHeader) isDragging = true;
+    });
+}
 
 document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
+    if (isDragging && adminPanel) {
         e.preventDefault();
         currentX = e.clientX - initialX;
         currentY = e.clientY - initialY;
@@ -419,9 +440,9 @@ document.addEventListener('mouseup', () => {
     isDragging = false;
 });
 
-categorySelect.addEventListener('change', updateSubCategories);
-tierSelect.addEventListener('change', checkActiveTierStatus);
-spinBtn.addEventListener('click', spinLootBox);
+if (categorySelect) categorySelect.addEventListener('change', updateSubCategories);
+if (tierSelect) tierSelect.addEventListener('change', checkActiveTierStatus);
+if (spinBtn) spinBtn.addEventListener('click', spinLootBox);
 
 updateCategoryDropdownOptions();
 setInterval(syncFromCloudDatabase, 3000);
