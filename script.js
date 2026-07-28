@@ -10,7 +10,7 @@ const HASHED_PASSWORD = "ef92b778bafe42552345d620a2ec70e22709bbf1b7168c783e78298
 // 📡 DATABASE CONFIGURATION LINK
 // ==========================================
 // Replace this with your personal Firebase database web URL string once you make one.
-const DATABASE_API_URL = "https://firebaseio.com";
+const DATABASE_API_URL = "https://adventuregame-1dc643-default-rtdb.firebaseio.com/";
 
 // ==========================================
 // 🛠️ DYNAMIC SUB-CATEGORY OPTIONS CONFIGURATION
