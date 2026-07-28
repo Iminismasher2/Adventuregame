@@ -3,69 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DM Loot Box Roller</title>
+    <title>DM Dashboard & Loot Roller</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🎲 DM Campaign Loot Roller 🎲</h1>
-            <p>Select a crate tier, choose your category modifier, and spin for loot!</p>
-        </header>
+        
+        <!-- 🧭 Tab Navigation Menu Bar -->
+        <nav class="tab-navigation">
+            <button id="tab-loot-btn" class="nav-tab active-tab" onclick="switchTab('loot-view')">📦 Crate Opener</button>
+            <button id="tab-dice-btn" class="nav-tab" onclick="switchTab('dice-view')">🎲 Dice Roller</button>
+        </nav>
 
-        <main class="grid-layout">
-            <!-- Left Side: Controls -->
-            <section class="controls-card">
-                <div class="form-group">
-                    <label for="tier-select">📦 Select Box Tier:</label>
-                    <select id="tier-select">
-                        <option value="Bronze">Bronze</option>
-                        <option value="Silver">Silver</option>
-                        <option value="Gold">Gold</option>
-                        <option value="Platinum">Platinum</option>
-                        <option value="Legendary">Legendary</option>
-                        <option value="Celestial">Celestial</option>
-                    </select>
-                </div>
+        <!-- ==========================================
+           📦 VIEW 1: LOOT BOX CRATE OPENER 
+           ========================================== -->
+        <div id="loot-view" class="tab-content-view">
+            <header>
+                <h1>🎲 DM Campaign Loot Roller 🎲</h1>
+                <p>Select a crate tier, choose your category modifier, and spin for loot!</p>
+            </header>
 
-                <div class="form-group">
-                    <label for="category-select">🏷️ Loot Table Tag / Category:</label>
-                    <select id="category-select">
-                        <option value="patron">Patron (Race Homeworld)</option>
-                        <option value="race">Your Character Race</option>
-                        <option value="class">Character Class</option>
-                        <option value="motivation">Character Motivation</option>
-                    </select>
-                </div>
+            <main class="grid-layout">
+                <!-- Left Side: Controls -->
+                <section class="controls-card">
+                    <div class="form-group">
+                        <label for="tier-select">📦 Select Box Tier:</label>
+                        <select id="tier-select">
+                            <option value="Bronze">Bronze</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Platinum">Platinum</option>
+                            <option value="Legendary">Legendary</option>
+                            <option value="Celestial">Celestial</option>
+                        </select>
+                    </div>
 
-                <div class="form-group">
-                    <label id="sub-category-label" for="sub-category-select">🌍 Select Option:</label>
-                    <select id="sub-category-select"></select>
-                </div>
+                    <div class="form-group">
+                        <label for="category-select">🏷️ Loot Table Tag / Category:</label>
+                        <select id="category-select">
+                            <option value="patron">Patron (Race Homeworld)</option>
+                            <option value="race">Your Character Race</option>
+                            <option value="class">Character Class</option>
+                            <option value="motivation">Character Motivation</option>
+                        </select>
+                    </div>
 
-                <button id="spin-btn" class="spin-button">✨ Open Loot Box ✨</button>
-                <div id="lockout-notice" class="lockout-text hidden">⚠️ This specific loot pool is locked by the DM!</div>
-            </section>
+                    <div class="form-group">
+                        <label id="sub-category-label" for="sub-category-select">🌍 Select Option:</label>
+                        <select id="sub-category-select"></select>
+                    </div>
 
-            <!-- Right Side: CS:GO Style Case Opener Display -->
-            <section class="display-card">
-                <h2>Case Opener</h2>
-                
-                <div class="case-container">
-                    <div class="case-ticker-line"></div>
-                    <div id="case-scroller" class="case-scroller"></div>
-                </div>
+                    <button id="spin-btn" class="spin-button">✨ Open Loot Box ✨</button>
+                    <div id="lockout-notice" class="lockout-text hidden">⚠️ This specific loot pool is locked by the DM!</div>
+                </section>
 
-                <div id="loot-display-container" class="loot-display hidden">
-                    <div id="item-rating-badge" class="rating-badge">Bronze</div>
-                    <img id="item-image" src="" alt="Loot Reward Image">
-                    <h3 id="item-name">Item Name</h3>
-                    <p id="item-ability">Item ability or description.</p>
-                </div>
-                
-                <div id="placeholder-text" class="placeholder-text">Ready to unbox...</div>
-            </section>
-        </main>
+                <!-- Right Side: CS:GO Style Case Opener Display -->
+                <section class="display-card">
+                    <h2>Case Opener</h2>
+                    
+                    <div class="case-container">
+                        <div class="case-ticker-line"></div>
+                        <div id="case-scroller" class="case-scroller"></div>
+                    </div>
+
+                    <div id="loot-display-container" class="loot-display hidden">
+                        <div id="item-rating-badge" class="rating-badge">Bronze</div>
+                        <img id="item-image" src="" alt="Loot Reward Image">
+                        <h3 id="item-name">Item Name</h3>
+                        <p id="item-ability">Item ability or description.</p>
+                    </div>
+                    
+                    <div id="placeholder-text" class="placeholder-text">Ready to unbox...</div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ==========================================
+           🎲 VIEW 2: TACTICAL DICE ROLLER
+           ========================================== -->
+        <div id="dice-view" class="tab-content-view hidden">
+            <header>
+                <h1>⚔️ Campaign Dice Roller ⚔️</h1>
+                <p>Select your dice quantity, choose a die size, and calculate your damage or skill checks!</p>
+            </header>
+
+            <main class="grid-layout">
+                <!-- Left Side: Dice Setup Controls -->
+                <section class="controls-card">
+                    <div class="form-group">
+                        <label for="dice-count">🔢 Number of Dice:</label>
+                        <input type="number" id="dice-count" value="1" min="1" max="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎲 Choose Die Type:</label>
+                        <div class="dice-quick-grid">
+                            <button class="dice-select-btn" onclick="selectDieType(4)">d4</button>
+                            <button class="dice-select-btn" onclick="selectDieType(6)">d6</button>
+                            <button class="dice-select-btn" onclick="selectDieType(8)">d8</button>
+                            <button class="dice-select-btn" onclick="selectDieType(10)">d10</button>
+                            <button class="dice-select-btn" onclick="selectDieType(12)">d12</button>
+                            <button class="dice-select-btn active-die" id="default-die-btn" onclick="selectDieType(20)">d20</button>
+                            <button class="dice-select-btn" onclick="selectDieType(100)">d100</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dice-modifier">➕ Flat Modifier (e.g. +5 Strength):</label>
+                        <input type="number" id="dice-modifier" value="0">
+                    </div>
+
+                    <button class="spin-button" onclick="rollDiceEngine()">🎲 Roll Dice 🎲</button>
+                </section>
+
+                <!-- Right Side: Dice Rolling Logs Output -->
+                <section class="display-card">
+                    <h2>Dice Result</h2>
+                    <div id="dice-placeholder" class="placeholder-text" style="margin-top: 100px;">Waiting for a roll...</div>
+                    
+                    <div id="dice-result-container" class="hidden">
+                        <div class="dice-total-box">
+                            <span id="dice-total-output">0</span>
+                        </div>
+                        <p class="dice-breakdown-text">Breakdown: <span id="dice-breakdown-output">0</span></p>
+                        
+                        <div class="history-log-panel">
+                            <h4>📜 Recent Roll History</h4>
+                            <ul id="dice-history-list"></ul>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
 
         <footer>
             <button id="admin-trigger-btn" class="admin-link-btn">🔒 Administrator Mode</button>
@@ -101,7 +171,6 @@
         <div class="panel-body">
             <p class="panel-instructions">Toggle switches to block/allow specific tier distribution across the network in real-time:</p>
             <div class="switch-grid">
-                <!-- Crate Tiers -->
                 <div class="switch-row"><span>Bronze Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Bronze" checked><span class="slider"></span></label></div>
                 <div class="switch-row"><span>Silver Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Silver" checked><span class="slider"></span></label></div>
                 <div class="switch-row"><span>Gold Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Gold" checked><span class="slider"></span></label></div>
@@ -111,16 +180,8 @@
                 
                 <hr style="border: 0; border-top: 1px solid #3b4252; margin: 10px 0;">
                 
-                <!-- Loot Table Tags / Categories -->
                 <div class="switch-row"><span>Patron Category</span><label class="toggle-switch"><input type="checkbox" id="sw-cat-patron" checked><span class="slider"></span></label></div>
-                <div class="switch-row"><span>Race Category</span><label class="toggle-switch"><input type="checkbox" id="sw-cat-race" checked><span class="slider"></span></label></div>
-                <div class="switch-row"><span>Class Category</span><label class="toggle-switch"><input type="checkbox" id="sw-cat-class" checked><span class="slider"></span></label></div>
-                <div class="switch-row"><span>Motivation Category</span><label class="toggle-switch"><input type="checkbox" id="sw-cat-motivation" checked><span class="slider"></span></label></div>
-            </div>
 
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-</body>
-</html>
+                Race Category
+                Class Category
+                Motivation Category
