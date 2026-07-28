@@ -1,4 +1,3 @@
-<!-- Save this file as: index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,7 +16,6 @@
         <main class="grid-layout">
             <!-- Left Side: Controls -->
             <section class="controls-card">
-                <!-- 1. Tier Selection -->
                 <div class="form-group">
                     <label for="tier-select">📦 Select Box Tier:</label>
                     <select id="tier-select">
@@ -30,7 +28,6 @@
                     </select>
                 </div>
 
-                <!-- 2. Loot Table Configuration Category -->
                 <div class="form-group">
                     <label for="category-select">🏷️ Loot Table Tag / Category:</label>
                     <select id="category-select">
@@ -41,33 +38,41 @@
                     </select>
                 </div>
 
-                <!-- 3. Dynamic Sub-Category Dropdown -->
                 <div class="form-group">
                     <label id="sub-category-label" for="sub-category-select">🌍 Select Option:</label>
-                    <select id="sub-category-select">
-                        <!-- Options injected automatically by script.js -->
-                    </select>
+                    <select id="sub-category-select"></select>
                 </div>
 
-                <!-- Spin Button -->
                 <button id="spin-btn" class="spin-button">✨ Open Loot Box ✨</button>
             </section>
 
-            <!-- Right Side: Display Results -->
+            <!-- Right Side: CS:GO Style Case Opener Display -->
             <section class="display-card">
-                <h2>Rewards Acquired</h2>
+                <h2>Case Opener</h2>
+                
+                <!-- CS:GO Rolling Case Viewport -->
+                <div class="case-container">
+                    <div class="case-ticker-line"></div>
+                    <div id="case-scroller" class="case-scroller"></div>
+                </div>
+
+                <!-- Final Reward Card (Hidden until animation finishes) -->
                 <div id="loot-display-container" class="loot-display hidden">
                     <div id="item-rating-badge" class="rating-badge">Bronze</div>
-                    <img id="item-image" src="https://placeholder.com" alt="Loot Reward Image">
-                    <h3 id="item-name">Item Name Placeholder</h3>
-                    <p id="item-ability">Item ability or non-magical description goes here.</p>
+                    <img id="item-image" src="" alt="Loot Reward Image">
+                    <h3 id="item-name">Item Name</h3>
+                    <p id="item-ability">Item ability or description.</p>
                 </div>
+                
                 <div id="placeholder-text" class="placeholder-text">
-                    Waiting for a spin...
+                    Ready to unbox...
                 </div>
             </section>
         </main>
     </div>
+
+    <!-- Audio element for the CS:GO click tick sound -->
+    <audio id="tick-sound" src="https://google.com" preload="auto"></audio>
 
     <script src="script.js"></script>
 </body>
