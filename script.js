@@ -48,7 +48,12 @@ const lootTables = {
     motivation: {
         "Revenge": { Bronze: [{ name: "Target Dossier", image: "https://placehold.co", ability: "Sketches on loose targets." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
         "Glory": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
-    }
+    },
+    looter: {
+        Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+    },
+    pet: {
+        Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
 };
 
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
@@ -57,7 +62,7 @@ const categoriesList = ["patron", "race", "class", "motivation"];
 // Master dynamic network toggle array map tracker
 let serverStates = {
     Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true,
-    cat_patron: true, cat_race: true, cat_class: true, cat_motivation: true
+    cat_patron: true, cat_race: true, cat_class: true, cat_motivation: true, cat_looter: true, cat_pet: true
 };
 
 // DOM Layout Selectors
