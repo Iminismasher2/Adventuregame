@@ -57,7 +57,7 @@ const lootTables = {
 };
 
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
-const categoriesList = ["patron", "race", "class", "motivation"];
+const categoriesList = ["patron", "race", "class", "motivation", "looter", "pet"];
 
 // Master dynamic network toggle array map tracker
 let serverStates = {
