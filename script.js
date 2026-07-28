@@ -4,11 +4,9 @@
 const MASTER_ID = "Syndicate99";
 const MASTER_PASSWORD = "Password123";
 
-
 // ==========================================
 // 📡 DATABASE CONFIGURATION LINK
 // ==========================================
-// Replace this with your personal Firebase database web URL string once you make one.
 const DATABASE_API_URL = "https://adventuregame-1dc643-default-rtdb.firebaseio.com/lockouts.json";
 
 // ==========================================
@@ -54,9 +52,15 @@ const lootTables = {
 };
 
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
-let serverTierLockouts = { Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true };
+const categoriesList = ["patron", "race", "class", "motivation"];
 
-// DOM Element Selectors
+// Master dynamic network toggle array map tracker
+let serverStates = {
+    Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true,
+    cat_patron: true, cat_race: true, cat_class: true, cat_motivation: true
+};
+
+// DOM Layout Selectors
 const categorySelect = document.getElementById('category-select');
 const subCategorySelect = document.getElementById('sub-category-select');
 const subCategoryLabel = document.getElementById('sub-category-label');
@@ -72,7 +76,7 @@ const itemImage = document.getElementById('item-image');
 const itemName = document.getElementById('item-name');
 const itemAbility = document.getElementById('item-ability');
 
-// Admin System DOM Selectors
+// Admin UI Selectors
 const adminTriggerBtn = document.getElementById('admin-trigger-btn');
 const loginModal = document.getElementById('login-modal');
 const loginCancelBtn = document.getElementById('login-cancel-btn');
@@ -86,10 +90,51 @@ const adminPanelHeader = document.getElementById('admin-panel-header');
 const closePanelBtn = document.getElementById('close-panel-btn');
 
 const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:" };
+const nameMapping = { patron: "Patron (Race Homeworld)", race: "Your Character Race", class: "Character Class", motivation: "Character Motivation" };
+
+// Rebuilds the primary Category dropdown options menu item array dynamically based on cloud values
+function updateCategoryDropdownOptions() {
+    const currentSelection = categorySelect.value;
+    categorySelect.innerHTML = "";
+    
+    let activeCategoriesCount = 0;
+    
+    categoriesList.forEach(catKey => {
+        const isAllowed = serverStates[`cat_${catKey}`] !== false;
+        if (isAllowed) {
+            const opt = document.createElement('option');
+            opt.value = catKey;
+            opt.textContent = nameMapping[catKey];
+            categorySelect.appendChild(opt);
+            activeCategoriesCount++;
+        }
+    });
+    
+    if (activeCategoriesCount === 0) {
+        const opt = document.createElement('option');
+        opt.value = "none";
+        opt.textContent = "⚠️ All Options Locked by DM";
+        categorySelect.appendChild(opt);
+        subCategorySelect.innerHTML = "";
+        subCategoryLabel.textContent = "Locked Element Handler:";
+        spinBtn.disabled = true;
+        return;
+    }
+
+    // Retain previous choice safely if it still exists in public visibility scope arrays
+    if (serverStates[`cat_${currentSelection}`] !== false && currentSelection !== "") {
+        categorySelect.value = currentSelection;
+    }
+    
+    updateSubCategories();
+}
 
 function updateSubCategories() {
     const selectedCategory = categorySelect.value;
-    if (!subCategories[selectedCategory]) return;
+    if (selectedCategory === "none" || !subCategories[selectedCategory]) {
+        subCategorySelect.innerHTML = "";
+        return;
+    }
     
     subCategoryLabel.textContent = labelMapping[selectedCategory];
     subCategorySelect.innerHTML = "";
@@ -104,8 +149,12 @@ function updateSubCategories() {
 }
 
 function checkActiveTierStatus() {
+    if (categorySelect.value === "none") {
+        spinBtn.disabled = true;
+        return;
+    }
     const selectedTier = tierSelect.value;
-    const isAllowed = serverTierLockouts[selectedTier];
+    const isAllowed = serverStates[selectedTier];
     
     if (isAllowed === false) {
         spinBtn.disabled = true;
@@ -117,19 +166,27 @@ function checkActiveTierStatus() {
 }
 
 function syncFromCloudDatabase() {
-    // SAFETY FILTER: Stops the code from breaking if you haven't put your real Firebase link in yet
     if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
     
     fetch(DATABASE_API_URL)
         .then(res => res.json())
         .then(data => {
             if (data) {
-                serverTierLockouts = data;
+                serverStates = data;
+                
+                // Sync Tiers Checkboxes
                 tierList.forEach(t => {
                     const cb = document.getElementById(`sw-${t}`);
                     if (cb) cb.checked = (data[t] !== false);
                 });
-                checkActiveTierStatus();
+                
+                // Sync Categories Checkboxes
+                categoriesList.forEach(c => {
+                    const cb = document.getElementById(`sw-cat-${c}`);
+                    if (cb) cb.checked = (data[`cat_${c}`] !== false);
+                });
+                
+                updateCategoryDropdownOptions();
             }
         }).catch(err => console.log("Database read error:", err));
 }
@@ -140,16 +197,8 @@ function pushLockoutStateToCloud() {
     fetch(DATABASE_API_URL, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(serverTierLockouts)
+        body: JSON.stringify(serverStates)
     }).catch(err => console.log("Database write error:", err));
-}
-
-// Cryptographic hash math tool
-async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ==========================================
@@ -160,7 +209,7 @@ function spinLootBox() {
     const category = categorySelect.value;
     const subCategory = subCategorySelect.value;
     
-    if (serverTierLockouts[tier] === false) return; 
+    if (serverStates[tier] === false || category === "none") return; 
     
     const winningPool = lootTables[category]?.[subCategory]?.[tier];
     if (!winningPool || winningPool.length === 0) {
@@ -181,12 +230,13 @@ function spinLootBox() {
     
     const totalItemsCount = 30;
     const winningIndex = 25;
-    scroller.offsetHeight; 
+    scroller.offsetHeight;
 
     for (let i = 0; i < totalItemsCount; i++) {
         let displayItem, displayTier;
         if (i === winningIndex) {
-            displayItem = winnerItem; displayTier = tier;
+            displayItem = winnerItem; 
+            displayTier = tier;
         } else {
             displayTier = tierList[Math.floor(Math.random() * tierList.length)];
             const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
@@ -195,13 +245,14 @@ function spinLootBox() {
         
         const slot = document.createElement('div');
         slot.className = `carousel-item border-${displayTier}`;
+        
         const img = document.createElement('img');
         img.src = displayItem.image;
         slot.appendChild(img);
         scroller.appendChild(slot);
     }
     
-    const itemTotalWidth = 116; 
+    const itemTotalWidth = 116;
     const containerWidth = document.querySelector('.case-container').offsetWidth;
     const centerOffset = containerWidth / 2;
     const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
@@ -225,6 +276,7 @@ function spinLootBox() {
 }
 
 function getFillerItemPool(cat, sub, tier) {
+    if (cat === "none") return null;
     for (let c in lootTables) {
         for (let s in lootTables[c]) {
             if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier];
@@ -268,14 +320,23 @@ loginSubmitBtn.addEventListener('click', () => {
     }
 });
 
-
 closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
 
+// Bind Tiers Toggle Actions
 tierList.forEach(t => {
     document.getElementById(`sw-${t}`).addEventListener('change', (e) => {
-        serverTierLockouts[t] = e.target.checked;
+        serverStates[t] = e.target.checked;
         pushLockoutStateToCloud();
         checkActiveTierStatus();
+    });
+});
+
+// Bind Categories Toggle Actions
+categoriesList.forEach(c => {
+    document.getElementById(`sw-cat-${c}`).addEventListener('change', (e) => {
+        serverStates[`cat_${c}`] = e.target.checked;
+        pushLockoutStateToCloud();
+        updateCategoryDropdownOptions();
     });
 });
 
@@ -314,5 +375,6 @@ categorySelect.addEventListener('change', updateSubCategories);
 tierSelect.addEventListener('change', checkActiveTierStatus);
 spinBtn.addEventListener('click', spinLootBox);
 
-updateSubCategories();
+// Start systems execution engines loops
+updateCategoryDropdownOptions();
 setInterval(syncFromCloudDatabase, 3000);
