@@ -7,7 +7,7 @@ const MASTER_PASSWORD = "Password123";
 // ==========================================
 // 📡 DATABASE CONFIGURATION LINK
 // ==========================================
-const DATABASE_API_URL = "https://firebaseio.com";
+const DATABASE_API_URL = "https://adventuregame-1dc643-default-rtdb.firebaseio.com/lockouts.json";
 
 // ==========================================
 // 🛠️ DYNAMIC SUB-CATEGORY OPTIONS CONFIGURATION
