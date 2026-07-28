@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Dice Roller</title>
+    <style>
+        body {
+            background-color: #0f111a;
+            color: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+        }
+        .dice-card {
+            background-color: #1a1d2e;
+            border: 2px solid #2e344e;
+            border-radius: 12px;
+            padding: 25px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h1 { color: #8b5cf6; margin-top: 0; font-size: 24px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #a6adbb; }
+        input[type="number"] {
+            width: 100%; padding: 12px; background-color: #0f111a; color: #fff;
+            border: 2px solid #3b4252; border-radius: 6px; font-size: 16px; box-sizing: border-box;
+        }
+        input:focus { border-color: #8b5cf6; outline: none; }
+        .dice-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .dice-btn {
+            flex: 1; min-width: 55px; background-color: #0f111a; color: #fff; 
+            border: 2px solid #3b4252; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;
+        }
+        .dice-btn.active-die { background-color: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; }
+        .roll-button {
+            width: 100%; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer;
+        }
+        .total-box {
+            background: #0f111a; border: 3px solid #8b5cf6; width: 100px; height: 100px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 20px auto;
+        }
+        .total-box span { font-size: 36px; font-weight: bold; }
+        .breakdown { color: #a6adbb; font-style: italic; background: #0f111a; padding: 10px; border-radius: 6px; font-size: 14px; }
+        .hidden { display: none !important; }
+        .back-link { display: inline-block; margin-top: 15px; color: #64748b; font-size: 14px; text-decoration: none; }
+        .back-link:hover { color: #8b5cf6; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="dice-card">
+        <h1>🎲 Campaign Dice Roller</h1>
+        
+        <div class="form-group">
+            <label for="dice-qty">🔢 Number of Dice:</label>
+            <input type="number" id="dice-qty" value="1" min="1" max="50">
+        </div>
+
+        <div class="form-group">
+            <label>🎲 Choose Die Size:</label>
+            <div class="dice-grid">
+                <button class="dice-btn" onclick="selectDie(4)">d4</button>
+                <button class="dice-btn" onclick="selectDie(6)">d6</button>
+                <button class="dice-btn" onclick="selectDie(8)">d8</button>
+                <button class="dice-btn" onclick="selectDie(10)">d10</button>
+                <button class="dice-btn" onclick="selectDieType(12)">d12</button>
+                <button class="dice-btn active-die" id="default-die" onclick="selectDie(20)">d20</button>
+                <button class="dice-btn" onclick="selectDie(100)">d100</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="dice-mod">➕ Flat Modifier:</label>
+            <input type="number" id="dice-mod" value="0">
+        </div>
+
+        <button class="roll-button" onclick="rollDice()">Roll Dice</button>
+
+        <div id="result-area" class="hidden">
+            <div class="total-box"><span id="total-output">0</span></div>
+            <p class="breakdown">Breakdown: <span id="breakdown-output">0</span></p>
+        </div>
+        
+        <a href="index.html" class="back-link">⬅️ Back to Loot Crates</a>
+    </div>
+
+    <script>
+        let currentSides = 20;
+
+        function selectDie(sides) {
+            currentSides = sides;
+            document.querySelectorAll('.dice-btn').forEach(btn => btn.classList.remove('active-die'));
+            event.target.classList.add('active-die');
+        }
+
+        function rollDice() {
+            const qty = parseInt(document.getElementById('dice-qty').value) || 1;
+            const mod = parseInt(document.getElementById('dice-mod').value) || 0;
+            
+            let rolls = [];
+            let sum = 0;
+            
+            for (let i = 0; i < qty; i++) {
+                let result = Math.floor(Math.random() * currentSides) + 1;
+                rolls.push(result);
+                sum += result;
+            }
+            
+            const finalTotal = sum + mod;
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('total-output').textContent = finalTotal;
+            
+            let txt = rolls.join(' + ');
+            if (mod !== 0) txt += (mod > 0 ? ` + ${mod}` : ` - ${Math.abs(mod)}`);
+            document.getElementById('breakdown-output').textContent = `(${txt})`;
+        }
+    </script>
+</body>
+</html>
