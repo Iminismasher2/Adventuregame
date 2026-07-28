@@ -9,7 +9,7 @@ const SECRET_PASSWORD = "Password123"; // Change this to your master token pass 
 // ==========================================
 // Replace this with the string URL provided by your free Firebase console setup step.
 // Make sure it keeps the tailing slash and includes the "lockouts.json" endpoint route extension!
-const DATABASE_API_URL = "https://firebaseio.com";
+const DATABASE_API_URL = "https://adventuregame-1dc643-default-rtdb.firebaseio.com/lockouts.json";
 
 // ==========================================
 // 🛠️ DYNAMIC SUB-CATEGORY OPTIONS CONFIGURATION
