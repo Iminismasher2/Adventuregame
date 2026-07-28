@@ -120,6 +120,10 @@ footer { margin-top: 40px; text-align: center; border-top: 1px solid #2e344e; pa
 .draggable-panel {
     position: fixed; top: 100px; right: 50px; width: 320px; background: #1e2238;
     border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); z-index: 200; overflow: hidden;
+    max-height: 85vh; display: flex; flex-direction: column;
+}
+.panel-body { padding: 15px; overflow-y: auto; }
+
 }
 .panel-header {
     background: #2d325a; padding: 12px; font-weight: bold; color: #fff; cursor: move;
