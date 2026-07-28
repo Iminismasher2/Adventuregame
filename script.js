@@ -1,4 +1,17 @@
 // ==========================================
+// 🔐 SECURITY PROFILE CONFIGURATION
+// ==========================================
+const SECRET_ID = "Syndicate99";       // Change this to whatever ID value you want
+const SECRET_PASSWORD = "Password123"; // Change this to your master token pass key
+
+// ==========================================
+// 📡 DATABASE CONFIGURATION LINK
+// ==========================================
+// Replace this with the string URL provided by your free Firebase console setup step.
+// Make sure it keeps the tailing slash and includes the "lockouts.json" endpoint route extension!
+const DATABASE_API_URL = "https://adventuregame-1dc643-default-rtdb.firebaseio.com/";
+
+// ==========================================
 // 🛠️ DYNAMIC SUB-CATEGORY OPTIONS CONFIGURATION
 // ==========================================
 const subCategories = {
@@ -37,22 +50,22 @@ const lootTables = {
     motivation: {
         "Revenge": { Bronze: [{ name: "Target Dossier", image: "https://placehold.co", ability: "Sketches on loose targets." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
         "Glory": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
-    },
-    looter: { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+    }
 };
 
-// All available tiers used to generate fill filler items in the spin wheel
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
 
-// ==========================================
-// ⚙️ CS:GO CAROUSEL ENGINE LOGIC
-// ==========================================
+// Dynamic system lock states tracked via data engines
+let serverTierLockouts = { Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true };
+
+// DOM Selector Elements
 const categorySelect = document.getElementById('category-select');
 const subCategorySelect = document.getElementById('sub-category-select');
 const subCategoryLabel = document.getElementById('sub-category-label');
 const tierSelect = document.getElementById('tier-select');
 const spinBtn = document.getElementById('spin-btn');
 const scroller = document.getElementById('case-scroller');
+const lockoutNotice = document.getElementById('lockout-notice');
 
 const placeholderText = document.getElementById('placeholder-text');
 const lootDisplayContainer = document.getElementById('loot-display-container');
@@ -61,13 +74,20 @@ const itemImage = document.getElementById('item-image');
 const itemName = document.getElementById('item-name');
 const itemAbility = document.getElementById('item-ability');
 
-const labelMapping = {
-    patron: "🌍 Select Race Homeworld:",
-    race: "🧬 Select Your Race:",
-    class: "⚔️ Select Your Class:",
-    motivation: "🔥 Select Motivation:"
-    looter: "-"
-};
+// Admin Panel Access Variables
+const adminTriggerBtn = document.getElementById('admin-trigger-btn');
+const loginModal = document.getElementById('login-modal');
+const loginCancelBtn = document.getElementById('login-cancel-btn');
+const loginSubmitBtn = document.getElementById('login-submit-btn');
+const adminIdInput = document.getElementById('admin-id-input');
+const adminPassInput = document.getElementById('admin-pass-input');
+const loginStatusMsg = document.getElementById('login-status-msg');
+
+const adminPanel = document.getElementById('admin-panel');
+const adminPanelHeader = document.getElementById('admin-panel-header');
+const closePanelBtn = document.getElementById('close-panel-btn');
+
+const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:" };
 
 function updateSubCategories() {
     const selectedCategory = categorySelect.value;
@@ -80,116 +100,200 @@ function updateSubCategories() {
         optElement.textContent = option;
         subCategorySelect.appendChild(optElement);
     });
+    checkActiveTierStatus();
 }
 
+// Check database lock array states to determine switch options accessibility rules dynamically
+function checkActiveTierStatus() {
+    const selectedTier = tierSelect.value;
+    const isAllowed = serverTierLockouts[selectedTier];
+    
+    if (isAllowed === false) {
+        spinBtn.disabled = true;
+        lockoutNotice.classList.remove('hidden');
+    } else {
+        spinBtn.disabled = false;
+        lockoutNotice.classList.add('hidden');
+    }
+}
+
+// Fetch states live from cloud database service endpoints
+function syncFromCloudDatabase() {
+    if (DATABASE_API_URL.includes("your-project-id")) return; // Fallback structure safety skip
+    
+    fetch(DATABASE_API_URL)
+        .then(res => res.json())
+        .then(data => {
+            if (data) {
+                serverTierLockouts = data;
+                // Sync physical interface checkbox states to current cloud states
+                tierList.forEach(t => {
+                    const cb = document.getElementById(`sw-${t}`);
+                    if (cb) cb.checked = (data[t] !== false);
+                });
+                checkActiveTierStatus();
+            }
+        }).catch(err => console.log("Cloud read missing:", err));
+}
+
+// Push admin toggle changes to cloud storage vectors
+function pushLockoutStateToCloud() {
+    if (DATABASE_API_URL.includes("your-project-id")) return;
+    
+    fetch(DATABASE_API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(serverTierLockouts)
+    }).catch(err => console.log("Cloud save failure:", err));
+}
+
+// ==========================================
+// 🕹️ CS:GO CAROUSEL ENGINE LOGIC
+// ==========================================
 function spinLootBox() {
     const tier = tierSelect.value;
     const category = categorySelect.value;
     const subCategory = subCategorySelect.value;
     
-    if (!lootTables[category]?.[subCategory]?.[tier]) {
-        alert("Loot structure missing setup!");
+    if (serverTierLockouts[tier] === false) return; // Prevent edge case illegal execution exploits
+    
+    const winningPool = lootTables[category]?.[subCategory]?.[tier];
+    if (!winningPool || winningPool.length === 0) {
+        alert(`No items programmed inside the [${tier}] table for [${subCategory}].`);
         return;
     }
     
-    const winningPool = lootTables[category][subCategory][tier];
-    if (winningPool.length === 0) {
-        alert(`No items programmed inside the [${tier}] table for [${subCategory}]. Add items inside script.js!`);
-        return;
-    }
-    
-    // Choose the actual winner right now
     const winnerItem = winningPool[Math.floor(Math.random() * winningPool.length)];
     
-    // Disable inputs during animation run
     spinBtn.disabled = true;
     lootDisplayContainer.classList.add('hidden');
     placeholderText.classList.remove('hidden');
     placeholderText.textContent = "Unboxing crate...";
 
-    // Build item strip arrays (30 items total, item 26 will be the winner)
     scroller.innerHTML = "";
     scroller.style.transition = "none";
     scroller.style.transform = "translateX(0px)";
     
     const totalItemsCount = 30;
-    const winningIndex = 25; // 0-indexed item slot
-    
-    // Force a micro layout redraw so the browser registers resetting to 0px position
-    scroller.offsetHeight;
+    const winningIndex = 25;
+    scroller.offsetHeight; // Layout recalculation redraw engine anchor
 
     for (let i = 0; i < totalItemsCount; i++) {
-        let displayItem;
-        let displayTier;
-        
+        let displayItem, displayTier;
         if (i === winningIndex) {
-            displayItem = winnerItem;
-            displayTier = tier;
+            displayItem = winnerItem; displayTier = tier;
         } else {
-            // Pick a completely random filler item tier and pull from a pool
             displayTier = tierList[Math.floor(Math.random() * tierList.length)];
             const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
             displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
         }
         
-        // Create slot box card elements
         const slot = document.createElement('div');
         slot.className = `carousel-item border-${displayTier}`;
-        
         const img = document.createElement('img');
         img.src = displayItem.image;
         slot.appendChild(img);
-        
         scroller.appendChild(slot);
     }
     
-    // Math to center the 26th item perfectly inside the viewfinder container line viewport
-    const slotWidth = 110; 
-    const slotMargin = 6;
-    const itemTotalWidth = slotWidth + slotMargin;
-    
+    const itemTotalWidth = 116; 
     const containerWidth = document.querySelector('.case-container').offsetWidth;
     const centerOffset = containerWidth / 2;
-    
-    // Pick a slight random variance pixel point offset inside the item card so it doesn't land exactly center every time
-    const randomInnerVariance = Math.floor(Math.random() * 40) + 35; 
+    const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
     const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
-    
-    // Start CS:GO Slowdown CSS Animation Curve
     scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
-    scroller.style.transform = `translateX(-${targetDistance}px)`;
-    
-    // Reveal final text statistics card after 4.5s animation completes
+    scroller.style.transform = translateX(-${targetDistance}px);
     setTimeout(() => {
-        spinBtn.disabled = false;
-        placeholderText.classList.add('hidden');
-        lootDisplayContainer.classList.remove('hidden');
-        
-        lootDisplayContainer.className = "loot-display tier-" + tier;
-        itemRatingBadge.className = "rating-badge badge-" + tier;
-        
-        itemRatingBadge.textContent = tier + " Quality";
-        itemName.textContent = winnerItem.name;
-        itemImage.src = winnerItem.image;
-        itemAbility.textContent = winnerItem.ability;
+    checkActiveTierStatus(); // Re-evaluate validation boundaries
+    placeholderText.classList.add('hidden');
+    lootDisplayContainer.classList.remove('hidden');
+    lootDisplayContainer.className = "loot-display tier-" + tier;
+    itemRatingBadge.className = "rating-badge badge-" + tier;
+    itemRatingBadge.textContent = tier + " Quality";
+    itemName.textContent = winnerItem.name;
+    itemImage.src = winnerItem.image;
+    itemAbility.textContent = winnerItem.ability;
     }, 4500);
-}
-
-// Safely look up any available items to fill the track background
-function getFillerItemPool(cat, sub, tier) {
+    }
+    function getFillerItemPool(cat, sub, tier) {
     for (let c in lootTables) {
-        for (let s in lootTables[c]) {
-            if (lootTables[cat]?.[sub]?.[tier]?.length > 0) {
-                return lootTables[cat][sub][tier];
-            }
-            if (lootTables[c][s][tier]?.length > 0) {
-                return lootTables[c][s][tier];
-            }
-        }
+    for (let s in lootTables[c]) {
+    if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier];
+    if (lootTables[c][s][tier]?.length > 0) return lootTables[c][s][tier];
+    }
     }
     return null;
-}
-
-categorySelect.addEventListener('change', updateSubCategories);
-spinBtn.addEventListener('click', spinLootBox);
-updateSubCategories();
+    }
+    // ==========================================
+    // 🛡️ SECURITY MODULE AND DRAGGABLE ACTIONS INTERFACES
+    // ==========================================
+    adminTriggerBtn.addEventListener('click', () => {
+    loginModal.classList.remove('hidden');
+    loginStatusMsg.className = "status-msg";
+    loginStatusMsg.textContent = "";
+    adminIdInput.value = "";
+    adminPassInput.value = "";
+    });
+    loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
+    loginSubmitBtn.addEventListener('click', () => {
+    const enteredID = adminIdInput.value;
+    const enteredPass = adminPassInput.value;
+    if (enteredID === SECRET_ID && enteredPass === SECRET_PASSWORD) {
+    loginStatusMsg.className = "status-msg status-success";
+    loginStatusMsg.textContent = "Successful, logging in...";
+    setTimeout(() => {
+    loginModal.classList.add('hidden');
+    adminPanel.classList.remove('hidden');
+    // Force dynamic positioning back near top right default positions upon fresh logins
+    adminPanel.style.top = "100px";
+    adminPanel.style.right = "50px";
+    adminPanel.style.left = "auto";
+    }, 1200);
+    } else {
+    loginStatusMsg.className = "status-msg status-error";
+    loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
+    }
+    });
+    closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
+    // Attaching checkbox switch state click mutation triggers
+    tierList.forEach(t => {
+    document.getElementById(sw-${t}).addEventListener('change', (e) => {
+    serverTierLockouts[t] = e.target.checked;
+    pushLockoutStateToCloud();
+    checkActiveTierStatus();
+    });
+    });
+    // Draggable Panel API Logic Engine Script Integration
+    let isDragging = false;
+    let currentX, currentY, initialX, initialY;
+    let xOffset = 0, yOffset = 0;
+    adminPanelHeader.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    function dragStart(e) {
+    initialX = e.clientX - xOffset;
+    initialY = e.clientY - yOffset;
+    if (e.target === adminPanelHeader) isDragging = true;
+    }
+    function drag(e) {
+    if (isDragging) {
+    e.preventDefault();
+    currentX = e.clientX - initialX;
+    currentY = e.clientY - initialY;
+    xOffset = currentX;
+    yOffset = currentY;
+    adminPanel.style.transform = translate(${currentX}px, ${currentY}px);
+    }
+    }
+    function dragEnd() {
+    initialX = currentX;
+    initialY = currentY;
+    isDragging = false;
+    }
+    // Event hooks setup
+    categorySelect.addEventListener('change', updateSubCategories);
+    tierSelect.addEventListener('change', checkActiveTierStatus);
+    spinBtn.addEventListener('click', spinLootBox);
+    // Initialize system defaults and start persistent real-time background sync polling tasks
+    updateSubCategories();
+    setInterval(syncFromCloudDatabase, 3000); // Poll database updates automatically every 3 seconds
