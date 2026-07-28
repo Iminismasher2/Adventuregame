@@ -7,7 +7,7 @@ const MASTER_PASSWORD = "Password123";
 // ==========================================
 // 📡 DATABASE CONFIGURATION LINK
 // ==========================================
-const DATABASE_API_URL = "https://adventuregame-1dc643-default-rtdb.firebaseio.com/lockouts.json";
+const DATABASE_API_URL = "https://firebaseio.com";
 
 // ==========================================
 // 🛠️ DYNAMIC SUB-CATEGORY OPTIONS CONFIGURATION
@@ -54,13 +54,76 @@ const lootTables = {
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
 const categoriesList = ["patron", "race", "class", "motivation"];
 
-// Master dynamic network toggle array map tracker
 let serverStates = {
     Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true,
     cat_patron: true, cat_race: true, cat_class: true, cat_motivation: true
 };
 
-// DOM Layout Selectors
+// ==========================================
+// 🧭 TAB SYSTEM VIEW SWITCH LOGIC
+// ==========================================
+function switchTab(viewId) {
+    document.querySelectorAll('.tab-content-view').forEach(view => view.classList.add('hidden'));
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active-tab'));
+    
+    document.getElementById(viewId).classList.remove('hidden');
+    if (viewId === 'loot-view') document.getElementById('tab-loot-btn').classList.add('active-tab');
+    if (viewId === 'dice-view') document.getElementById('tab-dice-btn').classList.add('active-tab');
+}
+
+// ==========================================
+// 🎲 DICE ROLLER LOGIC ENGINE
+// ==========================================
+let selectedDieSides = 20;
+
+function selectDieType(sides) {
+    selectedDieSides = sides;
+    document.querySelectorAll('.dice-select-btn').forEach(btn => btn.classList.remove('active-die'));
+    event.target.classList.add('active-die');
+}
+
+function rollDiceEngine() {
+    const countInput = document.getElementById('dice-count');
+    const modInput = document.getElementById('dice-modifier');
+    
+    let count = parseInt(countInput.value) || 1;
+    let modifier = parseInt(modInput.value) || 0;
+    
+    if (count < 1) count = 1;
+    if (count > 100) count = 100;
+    
+    let rolls = [];
+    let rollsTotalSum = 0;
+    
+    for (let i = 0; i < count; i++) {
+        let rolledValue = Math.floor(Math.random() * selectedDieSides) + 1;
+        rolls.push(rolledValue);
+        rollsTotalSum += rolledValue;
+    }
+    
+    let finalTotalScore = rollsTotalSum + modifier;
+    
+    document.getElementById('dice-placeholder').classList.add('hidden');
+    document.getElementById('dice-result-container').classList.remove('hidden');
+    document.getElementById('dice-total-output').textContent = finalTotalScore;
+    
+    let breakdownString = rolls.join(' + ');
+    if (modifier !== 0) {
+        breakdownString += (modifier > 0 ? ` + ${modifier} (Mod)` : ` - ${Math.abs(modifier)} (Mod)`);
+    }
+    document.getElementById('dice-breakdown-output').textContent = `(${breakdownString})`;
+    
+    const historyList = document.getElementById('dice-history-list');
+    const logItem = document.createElement('li');
+    let timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    logItem.textContent = `[${timestamp}] Rolled ${count}d${selectedDieSides}${modifier >= 0 ? '+' : ''}${modifier} ➔ Total: ${finalTotalScore}`;
+    
+    historyList.insertBefore(logItem, historyList.firstChild);
+}
+
+// ==========================================
+// 📦 LOOT BOX SELECTION CONNECTIONS
+// ==========================================
 const categorySelect = document.getElementById('category-select');
 const subCategorySelect = document.getElementById('sub-category-select');
 const subCategoryLabel = document.getElementById('sub-category-label');
@@ -76,7 +139,7 @@ const itemImage = document.getElementById('item-image');
 const itemName = document.getElementById('item-name');
 const itemAbility = document.getElementById('item-ability');
 
-// Admin UI Selectors
+// Admin Elements
 const adminTriggerBtn = document.getElementById('admin-trigger-btn');
 const loginModal = document.getElementById('login-modal');
 const loginCancelBtn = document.getElementById('login-cancel-btn');
@@ -92,18 +155,15 @@ const closePanelBtn = document.getElementById('close-panel-btn');
 const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:" };
 const nameMapping = { patron: "Patron (Race Homeworld)", race: "Your Character Race", class: "Character Class", motivation: "Character Motivation" };
 
-// Rebuilds the primary Category dropdown options menu item array dynamically based on cloud values
 function updateCategoryDropdownOptions() {
     const currentSelection = categorySelect.value;
     categorySelect.innerHTML = "";
-    
     let activeCategoriesCount = 0;
     
     categoriesList.forEach(catKey => {
-        const isAllowed = serverStates[`cat_${catKey}`] !== false;
-        if (isAllowed) {
+        if (serverStates[`cat_${catKey}`] !== false) {
             const opt = document.createElement('option');
-            opt.value = catKey;
+            opt.value = catKey; 
             opt.textContent = nameMapping[catKey];
             categorySelect.appendChild(opt);
             activeCategoriesCount++;
@@ -112,7 +172,7 @@ function updateCategoryDropdownOptions() {
     
     if (activeCategoriesCount === 0) {
         const opt = document.createElement('option');
-        opt.value = "none";
+        opt.value = "none"; 
         opt.textContent = "⚠️ All Options Locked by DM";
         categorySelect.appendChild(opt);
         subCategorySelect.innerHTML = "";
@@ -121,21 +181,18 @@ function updateCategoryDropdownOptions() {
         return;
     }
 
-    // Retain previous choice safely if it still exists in public visibility scope arrays
     if (serverStates[`cat_${currentSelection}`] !== false && currentSelection !== "") {
         categorySelect.value = currentSelection;
     }
-    
     updateSubCategories();
 }
 
 function updateSubCategories() {
     const selectedCategory = categorySelect.value;
     if (selectedCategory === "none" || !subCategories[selectedCategory]) {
-        subCategorySelect.innerHTML = "";
+        subCategorySelect.innerHTML = ""; 
         return;
     }
-    
     subCategoryLabel.textContent = labelMapping[selectedCategory];
     subCategorySelect.innerHTML = "";
     
@@ -154,9 +211,7 @@ function checkActiveTierStatus() {
         return;
     }
     const selectedTier = tierSelect.value;
-    const isAllowed = serverStates[selectedTier];
-    
-    if (isAllowed === false) {
+    if (serverStates[selectedTier] === false) {
         spinBtn.disabled = true;
         lockoutNotice.classList.remove('hidden');
     } else {
@@ -165,6 +220,9 @@ function checkActiveTierStatus() {
     }
 }
 
+// ==========================================
+// 📡 SYNC ROUTINES WITH FIREBASE CLOUD
+// ==========================================
 function syncFromCloudDatabase() {
     if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
     
@@ -173,19 +231,14 @@ function syncFromCloudDatabase() {
         .then(data => {
             if (data) {
                 serverStates = data;
-                
-                // Sync Tiers Checkboxes
                 tierList.forEach(t => {
                     const cb = document.getElementById(`sw-${t}`);
                     if (cb) cb.checked = (data[t] !== false);
                 });
-                
-                // Sync Categories Checkboxes
                 categoriesList.forEach(c => {
                     const cb = document.getElementById(`sw-cat-${c}`);
                     if (cb) cb.checked = (data[`cat_${c}`] !== false);
                 });
-                
                 updateCategoryDropdownOptions();
             }
         }).catch(err => console.log("Database read error:", err));
@@ -209,21 +262,19 @@ function spinLootBox() {
     const category = categorySelect.value;
     const subCategory = subCategorySelect.value;
     
-    if (serverStates[tier] === false || category === "none") return; 
+    if (serverStates[tier] === false || category === "none") return;
     
     const winningPool = lootTables[category]?.[subCategory]?.[tier];
     if (!winningPool || winningPool.length === 0) {
-        alert(`No items programmed inside the [${tier}] table for [${subCategory}].`);
+        alert(`No items programmed inside the [${tier}] table.`);
         return;
     }
     
     const winnerItem = winningPool[Math.floor(Math.random() * winningPool.length)];
-    
     spinBtn.disabled = true;
     lootDisplayContainer.classList.add('hidden');
     placeholderText.classList.remove('hidden');
-    placeholderText.textContent = "Unboxing crate...";
-
+    
     scroller.innerHTML = "";
     scroller.style.transition = "none";
     scroller.style.transform = "translateX(0px)";
@@ -235,14 +286,13 @@ function spinLootBox() {
     for (let i = 0; i < totalItemsCount; i++) {
         let displayItem, displayTier;
         if (i === winningIndex) {
-            displayItem = winnerItem; 
+            displayItem = winnerItem;
             displayTier = tier;
         } else {
             displayTier = tierList[Math.floor(Math.random() * tierList.length)];
             const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
             displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
         }
-        
         const slot = document.createElement('div');
         slot.className = `carousel-item border-${displayTier}`;
         
@@ -265,7 +315,6 @@ function spinLootBox() {
         checkActiveTierStatus();
         placeholderText.classList.add('hidden');
         lootDisplayContainer.classList.remove('hidden');
-        
         lootDisplayContainer.className = "loot-display tier-" + tier;
         itemRatingBadge.className = "rating-badge badge-" + tier;
         itemRatingBadge.textContent = tier + " Quality";
@@ -287,7 +336,7 @@ function getFillerItemPool(cat, sub, tier) {
 }
 
 // ==========================================
-// 🛡️ SECURITY MODULE AND DRAGGABLE ENGINES
+// 🛡️ SECURITY MODULE AND DRAGGABLE ACTIONS
 // ==========================================
 adminTriggerBtn.addEventListener('click', () => {
     loginModal.classList.remove('hidden');
@@ -302,11 +351,9 @@ loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'
 loginSubmitBtn.addEventListener('click', () => {
     const enteredID = adminIdInput.value.trim();
     const enteredPass = adminPassInput.value.trim();
-    
     if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
         loginStatusMsg.className = "status-msg status-success";
         loginStatusMsg.textContent = "Successful, logging in...";
-        
         setTimeout(() => {
             loginModal.classList.add('hidden');
             adminPanel.classList.remove('hidden');
@@ -322,7 +369,6 @@ loginSubmitBtn.addEventListener('click', () => {
 
 closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
 
-// Bind Tiers Toggle Actions
 tierList.forEach(t => {
     document.getElementById(`sw-${t}`).addEventListener('change', (e) => {
         serverStates[t] = e.target.checked;
@@ -331,7 +377,6 @@ tierList.forEach(t => {
     });
 });
 
-// Bind Categories Toggle Actions
 categoriesList.forEach(c => {
     document.getElementById(`sw-cat-${c}`).addEventListener('change', (e) => {
         serverStates[`cat_${c}`] = e.target.checked;
@@ -341,20 +386,15 @@ categoriesList.forEach(c => {
 });
 
 let isDragging = false;
-let currentX, currentY, initialX, initialY;
-let xOffset = 0, yOffset = 0;
+let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
 
-adminPanelHeader.addEventListener('mousedown', dragStart);
-document.addEventListener('mousemove', drag);
-document.addEventListener('mouseup', dragEnd);
-
-function dragStart(e) {
+adminPanelHeader.addEventListener('mousedown', (e) => {
     initialX = e.clientX - xOffset;
     initialY = e.clientY - yOffset;
     if (e.target === adminPanelHeader) isDragging = true;
-}
+});
 
-function drag(e) {
+document.addEventListener('mousemove', (e) => {
     if (isDragging) {
         e.preventDefault();
         currentX = e.clientX - initialX;
@@ -363,18 +403,17 @@ function drag(e) {
         yOffset = currentY;
         adminPanel.style.transform = `translate(${currentX}px, ${currentY}px)`;
     }
-}
+});
 
-function dragEnd() {
+document.addEventListener('mouseup', () => {
     initialX = currentX;
     initialY = currentY;
     isDragging = false;
-}
+});
 
 categorySelect.addEventListener('change', updateSubCategories);
 tierSelect.addEventListener('change', checkActiveTierStatus);
 spinBtn.addEventListener('click', spinLootBox);
 
-// Start systems execution engines loops
 updateCategoryDropdownOptions();
 setInterval(syncFromCloudDatabase, 3000);
