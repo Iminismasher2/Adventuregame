@@ -1,255 +1,193 @@
-:root {
-    --bg-dark: #0f111a;
-    --card-bg: #1a1d2e;
-    --text-main: #f0f4f8;
-    --accent: #8b5cf6;
-    
-    /* Tier Colors */
-    --color-Bronze: #cd7f32;
-    --color-Silver: #c0c0c0;
-    --color-Gold: #ffd700;
-    --color-Platinum: #e5e4e2;
-    --color-Legendary: #ff4500;
-    --color-Celestial: #00ffff;
-}
+// ==========================================
+// 🛠️ DYNAMIC SUB-CATEGORY OPTIONS CONFIGURATION
+// ==========================================
+const subCategories = {
+    patron: ["Terra Nova", "Zul'Kari Prime"],
+    race: ["Human", "Elf"],
+    class: ["Fighter", "Mage"],
+    motivation: ["Revenge", "Glory"]
+};
 
-body {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 20px;
-}
-
-.container {
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-header h1 {
-    color: var(--accent);
-    margin-bottom: 5px;
-}
-
-.grid-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-}
-
-@media (max-width: 768px) {
-    .grid-layout {
-        grid-template-columns: 1fr;
+// ==========================================
+// 📦 LOOT TABLES DATA STRUCTURE
+// ==========================================
+const lootTables = {
+    patron: {
+        "Terra Nova": {
+            Bronze: [
+                { name: "Terra Iron Rations", image: "https://placehold.co", ability: "Provides basic baseline nourishment for 3 days." },
+                { name: "Scout Compass", image: "https://placehold.co", ability: "Points strictly north on terrestrial planets." }
+            ],
+            Silver: [{ name: "Nova Laser Pointer", image: "https://placehold.co", ability: "Blinds organic targets temporarily up to 50 yards away." }],
+            Gold: [{ name: "Energy Core", image: "https://placehold.co", ability: "Can power a small rover or machine." }],
+            Platinum: [{ name: "Nano Medkit", image: "https://placehold.co", ability: "Instantly knits light flesh wounds closed." }],
+            Legendary: [{ name: "Vibroblade", image: "https://placehold.co", ability: "High frequency blade that cleanly slices titanium." }],
+            Celestial: [{ name: "Chronos Matrix", image: "https://placehold.co", ability: "Rewinds local reality time space by exactly 3 seconds." }]
+        },
+        "Zul'Kari Prime": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+    },
+    race: {
+        "Human": { Bronze: [{ name: "Multi-tool", image: "https://placehold.co", ability: "Standard maintenance tools." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+        "Elf": { Bronze: [{ name: "Twig Charm", image: "https://placehold.co", ability: "Minor tracking buffs in deep woodlands." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+    },
+    class: {
+        "Fighter": { Bronze: [{ name: "Whetstone Kit", image: "https://placehold.co", ability: "Maintains weapons cleanly." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+        "Mage": { Bronze: [{ name: "Ink & Quill", image: "https://placehold.co", ability: "Logging system notes." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+    },
+    motivation: {
+        "Revenge": { Bronze: [{ name: "Target Dossier", image: "https://placehold.co", ability: "Sketches on loose targets." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+        "Glory": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
     }
+};
+
+// All available tiers used to generate fill filler items in the spin wheel
+const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
+
+// ==========================================
+// ⚙️ CS:GO CAROUSEL ENGINE LOGIC
+// ==========================================
+const categorySelect = document.getElementById('category-select');
+const subCategorySelect = document.getElementById('sub-category-select');
+const subCategoryLabel = document.getElementById('sub-category-label');
+const tierSelect = document.getElementById('tier-select');
+const spinBtn = document.getElementById('spin-btn');
+const scroller = document.getElementById('case-scroller');
+
+const placeholderText = document.getElementById('placeholder-text');
+const lootDisplayContainer = document.getElementById('loot-display-container');
+const itemRatingBadge = document.getElementById('item-rating-badge');
+const itemImage = document.getElementById('item-image');
+const itemName = document.getElementById('item-name');
+const itemAbility = document.getElementById('item-ability');
+
+const labelMapping = {
+    patron: "🌍 Select Race Homeworld:",
+    race: "🧬 Select Your Race:",
+    class: "⚔️ Select Your Class:",
+    motivation: "🔥 Select Motivation:"
+};
+
+function updateSubCategories() {
+    const selectedCategory = categorySelect.value;
+    subCategoryLabel.textContent = labelMapping[selectedCategory];
+    subCategorySelect.innerHTML = "";
+    
+    subCategories[selectedCategory].forEach(option => {
+        const optElement = document.createElement('option');
+        optElement.value = option;
+        optElement.textContent = option;
+        subCategorySelect.appendChild(optElement);
+    });
 }
 
-.controls-card, .display-card {
-    background-color: var(--card-bg);
-    border: 2px solid #2e344e;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+function spinLootBox() {
+    const tier = tierSelect.value;
+    const category = categorySelect.value;
+    const subCategory = subCategorySelect.value;
+    
+    if (!lootTables[category]?.[subCategory]?.[tier]) {
+        alert("Loot structure missing setup!");
+        return;
+    }
+    
+    const winningPool = lootTables[category][subCategory][tier];
+    if (winningPool.length === 0) {
+        alert(`No items programmed inside the [${tier}] table for [${subCategory}]. Add items inside script.js!`);
+        return;
+    }
+    
+    // Choose the actual winner right now
+    const winnerItem = winningPool[Math.floor(Math.random() * winningPool.length)];
+    
+    // Disable inputs during animation run
+    spinBtn.disabled = true;
+    lootDisplayContainer.classList.add('hidden');
+    placeholderText.classList.remove('hidden');
+    placeholderText.textContent = "Unboxing crate...";
+
+    // Build item strip arrays (30 items total, item 26 will be the winner)
+    scroller.innerHTML = "";
+    scroller.style.transition = "none";
+    scroller.style.transform = "translateX(0px)";
+    
+    const totalItemsCount = 30;
+    const winningIndex = 25; // 0-indexed item slot
+    
+    // Force a micro layout redraw so the browser registers resetting to 0px position
+    scroller.offsetHeight;
+
+    for (let i = 0; i < totalItemsCount; i++) {
+        let displayItem;
+        let displayTier;
+        
+        if (i === winningIndex) {
+            displayItem = winnerItem;
+            displayTier = tier;
+        } else {
+            // Pick a completely random filler item tier and pull from a pool
+            displayTier = tierList[Math.floor(Math.random() * tierList.length)];
+            const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
+            displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
+        }
+        
+        // Create slot box card elements
+        const slot = document.createElement('div');
+        slot.className = `carousel-item border-${displayTier}`;
+        
+        const img = document.createElement('img');
+        img.src = displayItem.image;
+        slot.appendChild(img);
+        
+        scroller.appendChild(slot);
+    }
+    
+    // Math to center the 26th item perfectly inside the viewfinder container line viewport
+    const slotWidth = 110; 
+    const slotMargin = 6;
+    const itemTotalWidth = slotWidth + slotMargin;
+    
+    const containerWidth = document.querySelector('.case-container').offsetWidth;
+    const centerOffset = containerWidth / 2;
+    
+    // Pick a slight random variance pixel point offset inside the item card so it doesn't land exactly center every time
+    const randomInnerVariance = Math.floor(Math.random() * 40) + 35; 
+    const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
+    
+    // Start CS:GO Slowdown CSS Animation Curve
+    scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
+    scroller.style.transform = `translateX(-${targetDistance}px)`;
+    
+    // Reveal final text statistics card after 4.5s animation completes
+    setTimeout(() => {
+        spinBtn.disabled = false;
+        placeholderText.classList.add('hidden');
+        lootDisplayContainer.classList.remove('hidden');
+        
+        lootDisplayContainer.className = "loot-display tier-" + tier;
+        itemRatingBadge.className = "rating-badge badge-" + tier;
+        
+        itemRatingBadge.textContent = tier + " Quality";
+        itemName.textContent = winnerItem.name;
+        itemImage.src = winnerItem.image;
+        itemAbility.textContent = winnerItem.ability;
+    }, 4500);
 }
 
-.form-group {
-    margin-bottom: 20px;
+// Safely look up any available items to fill the track background
+function getFillerItemPool(cat, sub, tier) {
+    for (let c in lootTables) {
+        for (let s in lootTables[c]) {
+            if (lootTables[cat]?.[sub]?.[tier]?.length > 0) {
+                return lootTables[cat][sub][tier];
+            }
+            if (lootTables[c][s][tier]?.length > 0) {
+                return lootTables[c][s][tier];
+            }
+        }
+    }
+    return null;
 }
 
-label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #a6adbb;
-}
-
-select {
-    width: 100%;
-    padding: 12px;
-    background-color: #0f111a;
-    color: #fff;
-    border: 2px solid #3b4252;
-    border-radius: 6px;
-    font-size: 16px;
-    outline: none;
-    cursor: pointer;
-}
-
-select:focus {
-    border-color: var(--accent);
-}
-
-.spin-button {
-    width: 100%;
-    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-    color: white;
-    border: none;
-    padding: 15px;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.2s;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-}
-
-.spin-button:disabled {
-    background: #3b4252;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-/* ==========================================
-   🕹️ CS:GO CAROUSEL SYSTEM STYLING
-   ========================================== */
-.case-container {
-    position: relative;
-    width: 100%;
-    height: 130px;
-    background-color: #0b0c13;
-    border: 3px solid #2e344e;
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 20px 0;
-}
-
-/* The vertical marker line directly in the center */
-.case-ticker-line {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background-color: #ff4500;
-    z-index: 10;
-    box-shadow: 0 0 10px #ff4500;
-    transform: translateX(-50%);
-}
-
-/* Rolling strip holding all items side-by-side */
-.case-scroller {
-    display: flex;
-    position: absolute;
-    left: 0;
-    top: 10px;
-    height: 110px;
-    will-change: transform;
-}
-
-/* Individual item box slots inside the carousel */
-.carousel-item {
-    width: 110px;
-    height: 110px;
-    margin-right: 6px;
-    background-color: #1a1d2e;
-    border-bottom: 5px solid #555;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    padding: 5px;
-}
-
-.carousel-item img {
-    width: 70px;
-    height: 70px;
-    object-fit: contain;
-}
-
-/* Dynamic Tier Bottom Borders for Carousel Slots */
-.border-Bronze { border-bottom-color: var(--color-Bronze); }
-.border-Silver { border-bottom-color: var(--color-Silver); }
-.border-Gold { border-bottom-color: var(--color-Gold); }
-.border-Platinum { border-bottom-color: var(--color-Platinum); }
-.border-Legendary { border-bottom-color: var(--color-Legendary); }
-.border-Celestial { border-bottom-color: var(--color-Celestial); }
-
-/* Final Item Reveal Styling */
-.display-card {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 480px;
-}
-
-.placeholder-text {
-    color: #4c566a;
-    font-style: italic;
-    margin-top: 20px;
-}
-
-.loot-display {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    margin-top: 15px;
-}
-
-.hidden {
-    display: none !important;
-}
-
-.rating-badge {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-weight: bold;
-    color: #000;
-    text-transform: uppercase;
-    font-size: 14px;
-    margin-bottom: 15px;
-}
-
-#item-image {
-    width: 150px;
-    height: 150px;
-    object-fit: contain;
-    border-radius: 10px;
-    border: 3px solid #3b4252;
-    background-color: #0f111a;
-    padding: 10px;
-    margin-bottom: 15px;
-}
-
-#item-name {
-    font-size: 24px;
-    margin: 5px 0;
-}
-
-#item-ability {
-    color: #d8dee9;
-    line-height: 1.6;
-    max-width: 90%;
-    background: #0f111a;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 4px solid var(--accent);
-}
-
-/* Visual Glow Treatments for Unboxed Tiers */
-.tier-Bronze { border-color: var(--color-Bronze); box-shadow: 0 0 15px rgba(205, 127, 50, 0.4); }
-.tier-Silver { border-color: var(--color-Silver); box-shadow: 0 0 15px rgba(192, 192, 192, 0.4); }
-.tier-Gold { border-color: var(--color-Gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
-.tier-Platinum { border-color: var(--color-Platinum); box-shadow: 0 0 15px rgba(229, 228, 226, 0.4); }
-.tier-Legendary { border-color: var(--color-Legendary); box-shadow: 0 0 15px rgba(255, 69, 0, 0.6); }
-.tier-Celestial { border-color: var(--color-Celestial); box-shadow: 0 0 25px rgba(0, 255, 255, 0.7); }
-
-.badge-Bronze { background-color: var(--color-Bronze); color: #fff; }
-.badge-Silver { background-color: var(--color-Silver); color: #000; }
-.badge-Gold { background-color: var(--color-Gold); color: #000; }
-.badge-Platinum { background-color: var(--color-Platinum); color: #000; }
-.badge-Legendary { background-color: var(--color-Legendary); color: #fff; }
-.badge-Celestial { background-color: var(--color-Celestial); color: #000; }
-
-@keyframes popIn {
-    0% { transform: scale(0.7); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
+categorySelect.addEventListener('change', updateSubCategories);
+spinBtn.addEventListener('click', spinLootBox);
+updateSubCategories();
