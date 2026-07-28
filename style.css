@@ -117,25 +117,147 @@ footer { margin-top: 40px; text-align: center; border-top: 1px solid #2e344e; pa
 .modal-btn.cancel { background-color: #3b4252; color: white; }
 
 /* Draggable Control Panel Menu Styles */
+/* ==========================================
+   🛡️ SCROLLABLE & COMPACT ADMIN PANEL LAYOUT
+   ========================================== */
 .draggable-panel {
-    position: fixed; top: 100px; right: 50px; width: 320px; background: #1e2238;
-    border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); z-index: 200; overflow: hidden;
+    position: fixed;
+    top: 50px;
+    right: 50px;
+    width: 320px;
+    background: #1e2238;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+    z-index: 200;
+    overflow: hidden;
+    
+    /* Adapts to small screens and prevents frame overflow */
+    max-height: 75vh; 
+    display: flex;
+    flex-direction: column;
 }
-.panel-header {
-    background: #2d325a; padding: 12px; font-weight: bold; color: #fff; cursor: move;
-    display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3b4252; user-select: none;
-}
-.close-btn { background: none; border: none; color: #a6adbb; font-size: 20px; cursor: pointer; }
-.close-btn:hover { color: #fff; }
-.panel-body { padding: 15px; }
-.panel-instructions { font-size: 12px; color: #a6adbb; margin-top: 0; margin-bottom: 15px; }
 
-/* Toggle Switch Track Components */
-.switch-grid { display: flex; flex-direction: column; gap: 12px; }
-.switch-row { display: flex; justify-content: space-between; align-items: center; background: #151826; padding: 10px; border-radius: 6px; }
-.toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3b4252; transition: .3s; border-radius: 34px; }
-.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; }
-input:checked + .slider { background-color: #22c55e; }
-input:checked + .slider:before { transform: translateX(24px); }
+.panel-header {
+    background: #2d325a;
+    padding: 12px;
+    font-weight: bold;
+    color: #fff;
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #3b4252;
+    user-select: none;
+    flex-shrink: 0; /* Keeps header pinned at top */
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #a6adbb;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.panel-body {
+    padding: 15px;
+    
+    /* Activates custom scrollability when content exceeds frame limits */
+    overflow-y: auto; 
+    flex-grow: 1;
+}
+
+.panel-instructions {
+    font-size: 12px;
+    color: #a6adbb;
+    margin-top: 0;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+/* ==========================================
+   ⚙️ ADMIN CONTROL TOGGLE SWITCH GRID
+   ========================================== */
+.switch-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.switch-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #151826;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #2e344e;
+}
+
+.switch-row span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #e5e9f0;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #3b4252;
+    transition: .2s ease-in-out;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .2s ease-in-out;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #22c55e;
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* Custom internal scrollbar formatting for slick visual integration */
+.panel-body::-webkit-scrollbar {
+    width: 6px;
+}
+.panel-body::-webkit-scrollbar-track {
+    background: #1e2238;
+}
+.panel-body::-webkit-scrollbar-thumb {
+    background: #3b4252;
+    border-radius: 3px;
+}
+.panel-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
