@@ -1,0 +1,194 @@
+/* Save this file as: style.css */
+:root {
+    --bg-dark: #0f111a;
+    --card-bg: #1a1d2e;
+    --text-main: #f0f4f8;
+    --accent: #8b5cf6;
+    
+    /* Tier Colors */
+    --color-Bronze: #cd7f32;
+    --color-Silver: #c0c0c0;
+    --color-Gold: #ffd700;
+    --color-Platinum: #e5e4e2;
+    --color-Legendary: #ff4500;
+    --color-Celestial: #00ffff;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: var(--accent);
+    margin-bottom: 5px;
+}
+
+.grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 768px) {
+    .grid-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.controls-card, .display-card {
+    background-color: var(--card-bg);
+    border: 2px solid #2e344e;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #a6adbb;
+}
+
+select {
+    width: 100%;
+    padding: 12px;
+    background-color: #0f111a;
+    color: #fff;
+    border: 2px solid #3b4252;
+    border-radius: 6px;
+    font-size: 16px;
+    outline: none;
+    cursor: pointer;
+}
+
+select:focus {
+    border-color: var(--accent);
+}
+
+.spin-button {
+    width: 100%;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    color: white;
+    border: none;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.spin-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+}
+
+.spin-button:active {
+    transform: translateY(1px);
+}
+
+/* Display Card Styling */
+.display-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 400px;
+}
+
+.placeholder-text {
+    margin-auto: auto;
+    color: #4c566a;
+    font-style: italic;
+    margin-top: 100px;
+}
+
+.loot-display {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: popIn 0.4s ease-out;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.rating-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #000;
+    text-transform: uppercase;
+    font-size: 14px;
+    margin-bottom: 15px;
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+#item-image {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 3px solid #3b4252;
+    background-color: #0f111a;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+#item-name {
+    font-size: 24px;
+    margin: 5px 0;
+}
+
+#item-ability {
+    color: #d8dee9;
+    line-height: 1.6;
+    max-width: 90%;
+    background: #0f111a;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid var(--accent);
+}
+
+/* Dynamic Tier Border/Shadow Glows */
+.tier-Bronze { border-color: var(--color-Bronze); box-shadow: 0 0 15px rgba(205, 127, 50, 0.4); }
+.tier-Silver { border-color: var(--color-Silver); box-shadow: 0 0 15px rgba(192, 192, 192, 0.4); }
+.tier-Gold { border-color: var(--color-Gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+.tier-Platinum { border-color: var(--color-Platinum); box-shadow: 0 0 15px rgba(229, 228, 226, 0.4); }
+.tier-Legendary { border-color: var(--color-Legendary); box-shadow: 0 0 15px rgba(255, 69, 0, 0.6); }
+.tier-Celestial { border-color: var(--color-Celestial); box-shadow: 0 0 25px rgba(0, 255, 255, 0.7); }
+
+.badge-Bronze { background-color: var(--color-Bronze); color: #fff; }
+.badge-Silver { background-color: var(--color-Silver); color: #000; }
+.badge-Gold { background-color: var(--color-Gold); color: #000; }
+.badge-Platinum { background-color: var(--color-Platinum); color: #000; }
+.badge-Legendary { background-color: var(--color-Legendary); color: #fff; }
+.badge-Celestial { background-color: var(--color-Celestial); color: #000; }
+
+@keyframes popIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
