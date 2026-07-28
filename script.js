@@ -79,8 +79,16 @@ let selectedDieSides = 20;
 function selectDieType(sides) {
     selectedDieSides = sides;
     document.querySelectorAll('.dice-select-btn').forEach(btn => btn.classList.remove('active-die'));
-    event.target.classList.add('active-die');
+    
+    // SAFE IMPLEMENTATION: Uses modern element matching instead of a raw event handle
+    const targetButton = Array.from(document.querySelectorAll('.dice-select-btn'))
+        .find(btn => btn.textContent === `d${sides}`);
+        
+    if (targetButton) {
+        targetButton.classList.add('active-die');
+    }
 }
+
 
 function rollDiceEngine() {
     const countInput = document.getElementById('dice-count');
