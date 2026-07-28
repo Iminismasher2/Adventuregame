@@ -37,7 +37,8 @@ const lootTables = {
     motivation: {
         "Revenge": { Bronze: [{ name: "Target Dossier", image: "https://placehold.co", ability: "Sketches on loose targets." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
         "Glory": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
-    }
+    },
+    looter: { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
 };
 
 // All available tiers used to generate fill filler items in the spin wheel
@@ -65,6 +66,7 @@ const labelMapping = {
     race: "🧬 Select Your Race:",
     class: "⚔️ Select Your Class:",
     motivation: "🔥 Select Motivation:"
+    looter: "-"
 };
 
 function updateSubCategories() {
