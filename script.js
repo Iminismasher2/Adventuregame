@@ -93,7 +93,7 @@ const adminPanel = document.getElementById('admin-panel');
 const adminPanelHeader = document.getElementById('admin-panel-header');
 const closePanelBtn = document.getElementById('close-panel-btn');
 
-const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:" };
+const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:", looter: "-", pet: "-" };
 const nameMapping = { patron: "Patron (Race Homeworld)", race: "Your Character Race", class: "Character Class", motivation: "Character Motivation", looter: "Looter Box", pet: "Pet Box" };
 
 // Rebuilds the primary Category dropdown options menu item array dynamically based on cloud values
