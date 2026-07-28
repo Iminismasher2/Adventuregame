@@ -54,16 +54,16 @@ const lootTables = {
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
 const categoriesList = ["patron", "race", "class", "motivation"];
 
-// Clean fallback definitions to keep buttons unlocked if the database is brand new
 let serverStates = {
     Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true,
     cat_patron: true, cat_race: true, cat_class: true, cat_motivation: true
 };
 
-// ==========================================
-// 🧭 TAB SYSTEM VIEW SWITCH LOGIC
-// ==========================================
-function switchTab(viewId) {
+// Global variables for modules to share safely
+let selectedDieSides = 20;
+
+// Expose navigation switches to global window scope so HTML onclick tags can fire them
+window.switchTab = function(viewId) {
     document.querySelectorAll('.tab-content-view').forEach(view => view.classList.add('hidden'));
     document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active-tab'));
     
@@ -72,14 +72,9 @@ function switchTab(viewId) {
     
     if (viewId === 'loot-view') document.getElementById('tab-loot-btn').classList.add('active-tab');
     if (viewId === 'dice-view') document.getElementById('tab-dice-btn').classList.add('active-tab');
-}
+};
 
-// ==========================================
-// 🎲 DICE ROLLER LOGIC ENGINE
-// ==========================================
-let selectedDieSides = 20;
-
-function selectDieType(sides) {
+window.selectDieType = function(sides) {
     selectedDieSides = sides;
     document.querySelectorAll('.dice-select-btn').forEach(btn => btn.classList.remove('active-die'));
     
@@ -88,9 +83,9 @@ function selectDieType(sides) {
     if (targetButton) {
         targetButton.classList.add('active-die');
     }
-}
+};
 
-function rollDiceEngine() {
+window.rollDiceEngine = function() {
     const countInput = document.getElementById('dice-count');
     const modInput = document.getElementById('dice-modifier');
     
@@ -127,322 +122,317 @@ function rollDiceEngine() {
     logItem.textContent = `[${timestamp}] Rolled ${count}d${selectedDieSides}${modifier >= 0 ? '+' : ''}${modifier} ➔ Total: ${finalTotalScore}`;
     
     historyList.insertBefore(logItem, historyList.firstChild);
-}
+};
 
 // ==========================================
-// 📦 LOOT BOX ELEMENT SELECTORS
+// 🛡️ MAIN CORE EXECUTION CONTAINER
 // ==========================================
-const categorySelect = document.getElementById('category-select');
-const subCategorySelect = document.getElementById('sub-category-select');
-const subCategoryLabel = document.getElementById('sub-category-label');
-const tierSelect = document.getElementById('tier-select');
-const spinBtn = document.getElementById('spin-btn');
-const scroller = document.getElementById('case-scroller');
-const lockoutNotice = document.getElementById('lockout-notice');
+document.addEventListener("DOMContentLoaded", () => {
+    // DOM Layout Elements selectors handles
+    const categorySelect = document.getElementById('category-select');
+    const subCategorySelect = document.getElementById('sub-category-select');
+    const subCategoryLabel = document.getElementById('sub-category-label');
+    const tierSelect = document.getElementById('tier-select');
+    const spinBtn = document.getElementById('spin-btn');
+    const scroller = document.getElementById('case-scroller');
+    const lockoutNotice = document.getElementById('lockout-notice');
 
-const placeholderText = document.getElementById('placeholder-text');
-const lootDisplayContainer = document.getElementById('loot-display-container');
-const itemRatingBadge = document.getElementById('item-rating-badge');
-const itemImage = document.getElementById('item-image');
-const itemName = document.getElementById('item-name');
-const itemAbility = document.getElementById('item-ability');
+    const placeholderText = document.getElementById('placeholder-text');
+    const lootDisplayContainer = document.getElementById('loot-display-container');
+    const itemRatingBadge = document.getElementById('item-rating-badge');
+    const itemImage = document.getElementById('item-image');
+    const itemName = document.getElementById('item-name');
+    const itemAbility = document.getElementById('item-ability');
 
-// Admin Elements
-const adminTriggerBtn = document.getElementById('admin-trigger-btn');
-const loginModal = document.getElementById('login-modal');
-const loginCancelBtn = document.getElementById('login-cancel-btn');
-const loginSubmitBtn = document.getElementById('login-submit-btn');
-const adminIdInput = document.getElementById('admin-id-input');
-const adminPassInput = document.getElementById('admin-pass-input');
-const loginStatusMsg = document.getElementById('login-status-msg');
+    // Admin UI Elements
+    const adminTriggerBtn = document.getElementById('admin-trigger-btn');
+    const loginModal = document.getElementById('login-modal');
+    const loginCancelBtn = document.getElementById('login-cancel-btn');
+    const loginSubmitBtn = document.getElementById('login-submit-btn');
+    const adminIdInput = document.getElementById('admin-id-input');
+    const adminPassInput = document.getElementById('admin-pass-input');
+    const loginStatusMsg = document.getElementById('login-status-msg');
 
-const adminPanel = document.getElementById('admin-panel');
-const adminPanelHeader = document.getElementById('admin-panel-header');
-const closePanelBtn = document.getElementById('close-panel-btn');
+    const adminPanel = document.getElementById('admin-panel');
+    const adminPanelHeader = document.getElementById('admin-panel-header');
+    const closePanelBtn = document.getElementById('close-panel-btn');
 
-const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:" };
-const nameMapping = { patron: "Patron (Race Homeworld)", race: "Your Character Race", class: "Character Class", motivation: "Character Motivation" };
+    const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:" };
+    const nameMapping = { patron: "Patron (Race Homeworld)", race: "Your Character Race", class: "Character Class", motivation: "Character Motivation" };
 
-function updateCategoryDropdownOptions() {
-    if (!categorySelect) return;
-    const currentSelection = categorySelect.value;
-    categorySelect.innerHTML = "";
-    let activeCategoriesCount = 0;
-    
-    categoriesList.forEach(catKey => {
-        if (serverStates[`cat_${catKey}`] !== false) {
-            const opt = document.createElement('option');
-            opt.value = catKey; 
-            opt.textContent = nameMapping[catKey];
-            categorySelect.appendChild(opt);
-            activeCategoriesCount++;
-        }
-    });
-    
-    if (activeCategoriesCount === 0) {
-        const opt = document.createElement('option');
-        opt.value = "none"; 
-        opt.textContent = "⚠️ All Options Locked by DM";
-        categorySelect.appendChild(opt);
-        if (subCategorySelect) subCategorySelect.innerHTML = "";
-        if (subCategoryLabel) subCategoryLabel.textContent = "Locked Element Handler:";
-        if (spinBtn) spinBtn.disabled = true;
-        return;
-    }
-
-    if (serverStates[`cat_${currentSelection}`] !== false && currentSelection !== "") {
-        categorySelect.value = currentSelection;
-    }
-        updateSubCategories();
-}
-
-function updateSubCategories() {
-    if (!categorySelect || !subCategorySelect || !subCategoryLabel) return;
-    const selectedCategory = categorySelect.value;
-    if (selectedCategory === "none" || !subCategories[selectedCategory]) {
-        subCategorySelect.innerHTML = "";
-        return;
-    }
-    
-    subCategoryLabel.textContent = labelMapping[selectedCategory];
-    subCategorySelect.innerHTML = "";
-    
-    subCategories[selectedCategory].forEach(option => {
-        const optElement = document.createElement('option');
-        optElement.value = option;
-        optElement.textContent = option;
-        subCategorySelect.appendChild(optElement);
-    });
-    checkActiveTierStatus();
-}
-
-function checkActiveTierStatus() {
-    if (!categorySelect || !tierSelect || !spinBtn || !lockoutNotice) return;
-    if (categorySelect.value === "none") {
-        spinBtn.disabled = true;
-        return;
-    }
-    const selectedTier = tierSelect.value;
-    if (serverStates[selectedTier] === false) {
-        spinBtn.disabled = true;
-        lockoutNotice.classList.remove('hidden');
-    } else {
-        spinBtn.disabled = false;
-        lockoutNotice.classList.add('hidden');
-    }
-}
-
-// ==========================================
-// 📡 SYNC ROUTINES WITH FIREBASE CLOUD
-// ==========================================
-function syncFromCloudDatabase() {
-    if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
-    
-    fetch(DATABASE_API_URL)
-        .then(res => res.json())
-        .then(data => {
-            // SAFETY FILTER: Only apply values if the database actually has data in it
-            if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-                serverStates = data;
-                tierList.forEach(t => {
-                    const cb = document.getElementById(`sw-${t}`);
-                    if (cb) cb.checked = (data[t] !== false);
-                });
-                categoriesList.forEach(c => {
-                    const cb = document.getElementById(`sw-cat-${c}`);
-                    if (cb) cb.checked = (data[`cat_${c}`] !== false);
-                });
-                updateCategoryDropdownOptions();
+    function updateCategoryDropdownOptions() {
+        if (!categorySelect) return;
+        const currentSelection = categorySelect.value;
+        categorySelect.innerHTML = "";
+        let activeCategoriesCount = 0;
+        
+        categoriesList.forEach(catKey => {
+            if (serverStates[`cat_${catKey}`] !== false) {
+                const opt = document.createElement('option');
+                opt.value = catKey; 
+                opt.textContent = nameMapping[catKey];
+                categorySelect.appendChild(opt);
+                activeCategoriesCount++;
             }
-        }).catch(err => console.log("Database offline or empty fallback active:", err));
-}
-
-function pushLockoutStateToCloud() {
-    if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
-    
-    fetch(DATABASE_API_URL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(serverStates)
-    }).catch(err => console.log("Database write error:", err));
-}
-
-// ==========================================
-// 🕹️ CS:GO CAROUSEL ENGINE LOGIC
-// ==========================================
-function spinLootBox() {
-    const tier = tierSelect.value;
-    const category = categorySelect.value;
-    const subCategory = subCategorySelect.value;
-    
-    if (serverStates[tier] === false || category === "none") return;
-    
-    const winningPool = lootTables[category]?.[subCategory]?.[tier];
-    if (!winningPool || winningPool.length === 0) {
-        alert(`No items programmed inside the [${tier}] table.`);
-        return;
+        });
+        
+        if (activeCategoriesCount === 0) {
+            const opt = document.createElement('option');
+            opt.value = "none"; 
+            opt.textContent = "⚠️ All Options Locked by DM";
+            categorySelect.appendChild(opt);
+            if (subCategorySelect) subCategorySelect.innerHTML = "";
+            if (subCategoryLabel) subCategoryLabel.textContent = "Locked Element Handler:";
+            if (spinBtn) spinBtn.disabled = true;
+            return;
+        }
+        if (serverStates[`cat_${currentSelection}`] !== false && currentSelection !== "") {
+            categorySelect.value = currentSelection;
+        }
+        updateSubCategories();
     }
-    
-    const winnerItem = winningPool[Math.floor(Math.random() * winningPool.length)];
-    spinBtn.disabled = true;
-    lootDisplayContainer.classList.add('hidden');
-    placeholderText.classList.remove('hidden');
-    placeholderText.textContent = "Unboxing crate...";
-    
-    scroller.innerHTML = "";
-    scroller.style.transition = "none";
-    scroller.style.transform = "translateX(0px)";
-    
-    const totalItemsCount = 30;
-    const winningIndex = 25;
-    scroller.offsetHeight;
-    
-    for (let i = 0; i < totalItemsCount; i++) {
-        let displayItem, displayTier;
-        if (i === winningIndex) {
-            displayItem = winnerItem;
-            displayTier = tier;
-        } else {
-            displayTier = tierList[Math.floor(Math.random() * tierList.length)];
-            const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
-            displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
+
+    function updateSubCategories() {
+        if (!categorySelect || !subCategorySelect || !subCategoryLabel) return;
+        const selectedCategory = categorySelect.value;
+        if (selectedCategory === "none" || !subCategories[selectedCategory]) {
+            subCategorySelect.innerHTML = "";
+            return;
         }
         
-        const slot = document.createElement('div');
-        slot.className = `carousel-item border-${displayTier}`;
+        subCategoryLabel.textContent = labelMapping[selectedCategory];
+        subCategorySelect.innerHTML = "";
         
-        const img = document.createElement('img');
-        img.src = displayItem.image;
-        slot.appendChild(img);
-        scroller.appendChild(slot);
-    }
-    
-    const itemTotalWidth = 116;
-    const containerWidth = document.querySelector('.case-container').offsetWidth;
-    const centerOffset = containerWidth / 2;
-    const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
-    const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
-    
-    scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
-    scroller.style.transform = `translateX(-${targetDistance}px)`;
-    
-    setTimeout(() => {
+        subCategories[selectedCategory].forEach(option => {
+            const optElement = document.createElement('option');
+            optElement.value = option;
+            optElement.textContent = option;
+            subCategorySelect.appendChild(optElement);
+        });
         checkActiveTierStatus();
-        placeholderText.classList.add('hidden');
-        lootDisplayContainer.classList.remove('hidden');
-        lootDisplayContainer.className = "loot-display tier-" + tier;
-        itemRatingBadge.className = "rating-badge badge-" + tier;
-        itemRatingBadge.textContent = tier + " Quality";
-        itemName.textContent = winnerItem.name;
-        itemImage.src = winnerItem.image;
-        itemAbility.textContent = winnerItem.ability;
-    }, 4500);
-}
+    } 
 
-function getFillerItemPool(cat, sub, tier) {
-    if (cat === "none") return null;
-    for (let c in lootTables) {
-        for (let s in lootTables[c]) {
-            if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier];
-            if (lootTables[c][s][tier]?.length > 0) return lootTables[c][s][tier];
+    function checkActiveTierStatus() {
+        if (!categorySelect || !tierSelect || !spinBtn || !lockoutNotice) return;
+        if (categorySelect.value === "none") {
+            spinBtn.disabled = true;
+            return;
         }
-    }
-    return null;
-}
-
-// ==========================================
-// 🛡️ SECURITY MODULE AND DRAGGABLE ACTIONS
-// ==========================================
-if (adminTriggerBtn) {
-    adminTriggerBtn.addEventListener('click', () => {
-        loginModal.classList.remove('hidden');
-        loginStatusMsg.className = "status-msg";
-        loginStatusMsg.textContent = "";
-        adminIdInput.value = "";
-        adminPassInput.value = "";
-    });
-}
-
-if (loginCancelBtn) loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
-
-if (loginSubmitBtn) {
-    loginSubmitBtn.addEventListener('click', () => {
-        const enteredID = adminIdInput.value.trim();
-        const enteredPass = adminPassInput.value.trim();
-        
-        if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
-            loginStatusMsg.className = "status-msg status-success";
-            loginStatusMsg.textContent = "Successful, logging in...";
-            
-            setTimeout(() => {
-                loginModal.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-                adminPanel.style.top = "100px";
-                adminPanel.style.right = "50px";
-                adminPanel.style.left = "auto";
-            }, 1200);
+        const selectedTier = tierSelect.value;
+        if (serverStates[selectedTier] === false) {
+            spinBtn.disabled = true;
+            lockoutNotice.classList.remove('hidden');
         } else {
-            loginStatusMsg.className = "status-msg status-error";
-            loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
+            spinBtn.disabled = false;
+            lockoutNotice.classList.add('hidden');
+        }
+    }
+
+    function syncFromCloudDatabase() {
+        if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
+        
+        fetch(DATABASE_API_URL)
+            .then(res => res.json())
+            .then(data => {
+                if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+                    serverStates = data;
+                    tierList.forEach(t => {
+                        const cb = document.getElementById(`sw-${t}`);
+                        if (cb) cb.checked = (data[t] !== false);
+                    });
+                    categoriesList.forEach(c => {
+                        const cb = document.getElementById(`sw-cat-${c}`);
+                        if (cb) cb.checked = (data[`cat_${c}`] !== false);
+                    });
+                    updateCategoryDropdownOptions();
+                }
+            }).catch(err => console.log("Database sync checking logs:", err));
+    } 
+
+    function pushLockoutStateToCloud() {
+        if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
+        
+        fetch(DATABASE_API_URL, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(serverStates)
+        }).catch(err => console.log("Database write error:", err));
+    }
+
+    function spinLootBox() {
+        const tier = tierSelect.value;
+        const category = categorySelect.value;
+        const subCategory = subCategorySelect.value;
+        
+        if (serverStates[tier] === false || category === "none") return;
+        
+        const winningPool = lootTables[category]?.[subCategory]?.[tier];
+        if (!winningPool || winningPool.length === 0) {
+            alert(`No items programmed inside the [${tier}] table.`);
+            return;
+        }
+        
+        const winnerItem = winningPool[Math.floor(Math.random() * winningPool.length)];
+        spinBtn.disabled = true;
+        lootDisplayContainer.classList.add('hidden');
+        placeholderText.classList.remove('hidden');
+        placeholderText.textContent = "Unboxing crate...";
+        
+        scroller.innerHTML = "";
+        scroller.style.transition = "none";
+        scroller.style.transform = "translateX(0px)";
+        
+        const totalItemsCount = 30;
+        const winningIndex = 25;
+        scroller.offsetHeight;
+        
+        for (let i = 0; i < totalItemsCount; i++) {
+            let displayItem, displayTier;
+            if (i === winningIndex) {
+                displayItem = winnerItem;
+                displayTier = tier;
+            } else {
+                displayTier = tierList[Math.floor(Math.random() * tierList.length)];
+                const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
+                displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
+            }
+            
+            const slot = document.createElement('div');
+            slot.className = `carousel-item border-${displayTier}`;
+            
+            const img = document.createElement('img');
+            img.src = displayItem.image;
+            slot.appendChild(img);
+            scroller.appendChild(slot);
+        }
+        
+        const itemTotalWidth = 116;
+        const containerWidth = document.querySelector('.case-container').offsetWidth;
+        const centerOffset = containerWidth / 2;
+        const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
+        const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
+        
+        scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
+        scroller.style.transform = `translateX(-${targetDistance}px)`;
+        
+        setTimeout(() => {
+            checkActiveTierStatus();
+            placeholderText.classList.add('hidden');
+            lootDisplayContainer.classList.remove('hidden');
+            lootDisplayContainer.className = "loot-display tier-" + tier;
+            itemRatingBadge.className = "rating-badge badge-" + tier;
+            itemRatingBadge.textContent = tier + " Quality";
+            itemName.textContent = winnerItem.name;
+            itemImage.src = winnerItem.image;
+            itemAbility.textContent = winnerItem.ability;
+        }, 4500);
+    }
+
+    function getFillerItemPool(cat, sub, tier) {
+        if (cat === "none") return null;
+        for (let c in lootTables) {
+            for (let s in lootTables[c]) {
+                if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier];
+                if (lootTables[c][s][tier]?.length > 0) return lootTables[c][s][tier];
+            }
+        }
+        return null;
+    }
+
+    // Connect event bindings inside setup container frame safely
+    if (adminTriggerBtn) {
+        adminTriggerBtn.addEventListener('click', () => {
+            loginModal.classList.remove('hidden');
+            loginStatusMsg.className = "status-msg";
+            loginStatusMsg.textContent = "";
+            adminIdInput.value = "";
+            adminPassInput.value = "";
+        });
+    }
+
+    if (loginCancelBtn) loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
+
+    if (loginSubmitBtn) {
+        loginSubmitBtn.addEventListener('click', () => {
+            const enteredID = adminIdInput.value.trim();
+            const enteredPass = adminPassInput.value.trim();
+            
+            if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
+                loginStatusMsg.className = "status-msg status-success";
+                loginStatusMsg.textContent = "Successful, logging in...";
+                setTimeout(() => {
+                    loginModal.classList.add('hidden');
+                    adminPanel.classList.remove('hidden');
+                    adminPanel.style.top = "100px";
+                    adminPanel.style.right = "50px";
+                    adminPanel.style.left = "auto";
+                }, 1200);
+            } else {
+                loginStatusMsg.className = "status-msg status-error";
+                loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
+            }
+        });
+    }
+
+    if (closePanelBtn) closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden')); 
+
+    tierList.forEach(t => {
+        const el = document.getElementById(`sw-${t}`);
+        if (el) {
+            el.addEventListener('change', (e) => {
+                serverStates[t] = e.target.checked;
+                pushLockoutStateToCloud();
+                checkActiveTierStatus();
+            });
         }
     });
-}
 
-if (closePanelBtn) closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
+    categoriesList.forEach(c => {
+        const el = document.getElementById(`sw-cat-${c}`);
+        if (el) {
+            el.addEventListener('change', (e) => {
+                serverStates[`cat_${c}`] = e.target.checked;
+                pushLockoutStateToCloud();
+                updateCategoryDropdownOptions();
+            });
+        }
+    }); 
 
-tierList.forEach(t => {
-    const el = document.getElementById(`sw-${t}`);
-    if (el) {
-        el.addEventListener('change', (e) => {
-            serverStates[t] = e.target.checked;
-            pushLockoutStateToCloud();
-            checkActiveTierStatus();
+    // Panel Window Drag Calculations Engine
+    let isDragging = false;
+    let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+
+    if (adminPanelHeader) {
+        adminPanelHeader.addEventListener('mousedown', (e) => {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            if (e.target === adminPanelHeader) isDragging = true;
         });
     }
-});
 
-categoriesList.forEach(c => {
-    const el = document.getElementById(`sw-cat-${c}`);
-    if (el) {
-        el.addEventListener('change', (e) => {
-            serverStates[`cat_${c}`] = e.target.checked;
-            pushLockoutStateToCloud();
-            updateCategoryDropdownOptions();
-        });
-    }
-});
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging && adminPanel) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            xOffset = currentX;
+            yOffset = currentY;
+            adminPanel.style.transform = `translate(${currentX}px, ${currentY}px)`;
+        }
+    }); 
 
-let isDragging = false;
-let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
-
-if (adminPanelHeader) {
-    adminPanelHeader.addEventListener('mousedown', (e) => {
-        initialX = e.clientX - xOffset;
-        initialY = e.clientY - yOffset;
-        if (e.target === adminPanelHeader) isDragging = true;
+    document.addEventListener('mouseup', () => {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
     });
-}
 
-document.addEventListener('mousemove', (e) => {
-    if (isDragging && adminPanel) {
-        e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-        xOffset = currentX;
-        yOffset = currentY;
-        adminPanel.style.transform = `translate(${currentX}px, ${currentY}px)`;
-    }
+    if (categorySelect) categorySelect.addEventListener('change', updateSubCategories);
+    if (tierSelect) tierSelect.addEventListener('change', checkActiveTierStatus);
+    if (spinBtn) spinBtn.addEventListener('click', spinLootBox);
+
+    // Bootstrap execution layers sequentially
+    updateCategoryDropdownOptions();
+    setInterval(syncFromCloudDatabase, 3000);
 });
 
-document.addEventListener('mouseup', () => {
-    initialX = currentX;
-    initialY = currentY;
-    isDragging = false;
-});
-
-if (categorySelect) categorySelect.addEventListener('change', updateSubCategories);
-if (tierSelect) tierSelect.addEventListener('change', checkActiveTierStatus);
-if (spinBtn) spinBtn.addEventListener('click', spinLootBox);
-
-updateCategoryDropdownOptions();
-setInterval(syncFromCloudDatabase, 3000);
