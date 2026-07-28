@@ -35,7 +35,6 @@
                         <option value="race">Your Character Race</option>
                         <option value="class">Character Class</option>
                         <option value="motivation">Character Motivation</option>
-                        <option value="looter">Looter</option>
                     </select>
                 </div>
 
@@ -45,19 +44,18 @@
                 </div>
 
                 <button id="spin-btn" class="spin-button">✨ Open Loot Box ✨</button>
+                <div id="lockout-notice" class="lockout-text hidden">⚠️ This specific loot pool is locked by the DM!</div>
             </section>
 
             <!-- Right Side: CS:GO Style Case Opener Display -->
             <section class="display-card">
                 <h2>Case Opener</h2>
                 
-                <!-- CS:GO Rolling Case Viewport -->
                 <div class="case-container">
                     <div class="case-ticker-line"></div>
                     <div id="case-scroller" class="case-scroller"></div>
                 </div>
 
-                <!-- Final Reward Card (Hidden until animation finishes) -->
                 <div id="loot-display-container" class="loot-display hidden">
                     <div id="item-rating-badge" class="rating-badge">Bronze</div>
                     <img id="item-image" src="" alt="Loot Reward Image">
@@ -65,15 +63,53 @@
                     <p id="item-ability">Item ability or description.</p>
                 </div>
                 
-                <div id="placeholder-text" class="placeholder-text">
-                    Ready to unbox...
-                </div>
+                <div id="placeholder-text" class="placeholder-text">Ready to unbox...</div>
             </section>
         </main>
+
+        <footer>
+            <button id="admin-trigger-btn" class="admin-link-btn">🔒 Administrator Mode</button>
+        </footer>
     </div>
 
-    <!-- Audio element for the CS:GO click tick sound -->
-    <audio id="tick-sound" src="https://google.com" preload="auto"></audio>
+    <!-- Login Modal overlay -->
+    <div id="login-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Syndicate Access Verification</h3>
+            <div id="login-status-msg" class="status-msg"></div>
+            <div class="form-group">
+                <label>Syndicate ID:</label>
+                <input type="text" id="admin-id-input" placeholder="Enter ID...">
+            </div>
+            <div class="form-group">
+                <label>Access Password:</label>
+                <input type="password" id="admin-pass-input" placeholder="Enter Password...">
+            </div>
+            <div class="modal-actions">
+                <button id="login-submit-btn" class="modal-btn confirm">Verify</button>
+                <button id="login-cancel-btn" class="modal-btn cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Draggable Admin Control Panel Menu -->
+    <div id="admin-panel" class="draggable-panel hidden">
+        <div id="admin-panel-header" class="panel-header">
+            🛡️ Syndicate Director Terminal
+            <button id="close-panel-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="panel-body">
+            <p class="panel-instructions">Toggle switches to block/allow specific tier distribution across the network in real-time:</p>
+            <div class="switch-grid">
+                <div class="switch-row"><span>Bronze Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Bronze" checked><span class="slider"></span></label></div>
+                <div class="switch-row"><span>Silver Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Silver" checked><span class="slider"></span></label></div>
+                <div class="switch-row"><span>Gold Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Gold" checked><span class="slider"></span></label></div>
+                <div class="switch-row"><span>Platinum Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Platinum" checked><span class="slider"></span></label></div>
+                <div class="switch-row"><span>Legendary Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Legendary" checked><span class="slider"></span></label></div>
+                <div class="switch-row"><span>Celestial Crate</span><label class="toggle-switch"><input type="checkbox" id="sw-Celestial" checked><span class="slider"></span></label></div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
