@@ -50,10 +50,9 @@ const lootTables = {
         "Glory": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
     },
     looter: {
-        Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
-    },
-    pet: {
-        Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+        Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+
+    pet: { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
 };
 
 const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
