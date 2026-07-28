@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DM Dashboard & Loot Roller</title>
+    <title>DM Campaign Tool</title>
     <style>
         :root {
             --bg-dark: #0f111a;
             --card-bg: #1a1d2e;
             --text-main: #f0f4f8;
             --accent: #8b5cf6;
+            
+            /* Tier Colors */
             --color-Bronze: #cd7f32;
             --color-Silver: #c0c0c0;
             --color-Gold: #ffd700;
@@ -24,17 +26,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
-            overflow-x: hidden;
         }
 
-        .container { max-width: 1100px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 30px; }
-        header h1 { color: var(--accent); margin-bottom: 5px; }
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
 
-        /* 🧭 Navigation Tab Bar Layout Styling */
-        .tab-navigation {
+        /* 🧭 Simple Navigation Tabs Bar */
+        .tab-bar {
             display: flex;
             justify-content: center;
             gap: 15px;
@@ -42,7 +42,8 @@
             border-bottom: 2px solid #2e344e;
             padding-bottom: 12px;
         }
-        .nav-tab {
+
+        .tab-btn {
             background-color: #151826;
             color: #a6adbb;
             border: 2px solid #2e344e;
@@ -51,19 +52,45 @@
             font-weight: bold;
             border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s;
         }
-        .nav-tab:hover { color: #fff; border-color: var(--accent); }
-        .active-tab {
+
+        .tab-btn:hover {
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .tab-btn.active-tab {
             background-color: var(--accent);
             color: white;
             border-color: var(--accent);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
         }
 
-        /* Essential Tab Frame Controllers */
-        .tab-content-view { display: block; }
-        .tab-content-view.hidden { display: none !important; }
+        /* View Visibilities */
+        .tab-content { display: none; }
+        .tab-content.active-view { display: block; }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
 
         .controls-card, .display-card {
             background-color: var(--card-bg);
@@ -73,85 +100,164 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; color: #a6adbb; }
-        select, input[type="text"], input[type="password"], input[type="number"] {
-            width: 100%; padding: 12px; background-color: #0f111a; color: #fff;
-            border: 2px solid #3b4252; border-radius: 6px; font-size: 16px; box-sizing: border-box;
+        .form-group {
+            margin-bottom: 20px;
         }
-        select:focus, input:focus { border-color: var(--accent); outline: none; }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #a6adbb;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #0f111a;
+            color: #fff;
+            border: 2px solid #3b4252;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent);
+        }
 
         .spin-button {
-            width: 100%; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-            color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold;
-            border-radius: 6px; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
-        }
-        .spin-button:disabled { background: #24283b; color: #565f89; cursor: not-allowed; box-shadow: none; }
-
-        /* 🎲 Dice Selection Elements */
-        .dice-quick-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .dice-select-btn {
-            flex: 1; min-width: 50px; background-color: #0f111a; color: #fff; border: 2px solid #3b4252;
-            padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.15s;
-        }
-        .dice-select-btn:hover { border-color: var(--accent); }
-        .dice-select-btn.active-die { background-color: rgba(139, 92, 246, 0.2); border-color: var(--accent); color: #fff; }
-
-        .dice-total-box {
-            background: #0f111a; border: 3px solid var(--accent); width: 120px; height: 120px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            margin: 20px auto; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-        }
-        #dice-total-output { font-size: 42px; font-weight: bold; color: #fff; }
-        .dice-breakdown-text { color: #a6adbb; font-size: 15px; background: #0f111a; padding: 10px; border-radius: 6px; max-width: 90%; margin: 10px auto; text-align: center; }
-
-        .history-log-panel { width: 100%; text-align: left; margin-top: 25px; border-top: 1px solid #2e344e; padding-top: 15px; }
-        .history-log-panel h4 { margin: 0 0 10px 0; color: #a6adbb; }
-        #dice-history-list { list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; font-size: 14px; }
-        #dice-history-list li { padding: 6px; border-bottom: 1px solid #24283b; color: #d8dee9; }
-
-        .lockout-text {
-            color: #ff4500; font-weight: bold; text-align: center; margin-top: 15px;
-            background: rgba(255, 69, 0, 0.1); padding: 10px; border-radius: 6px; border: 1px solid #ff4500;
+            width: 100%;
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
         }
 
-        /* CS:GO Elements */
-        .case-container {
-            position: relative; width: 100%; height: 130px; background-color: #0b0c13;
-            border: 3px solid #2e344e; border-radius: 8px; overflow: hidden; margin: 20px 0;
+        .spin-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
         }
-        .case-ticker-line {
-            position: absolute; left: 50%; top: 0; width: 4px; height: 100%;
-            background-color: #ff4500; z-index: 10; box-shadow: 0 0 10px #ff4500; transform: translateX(-50%);
+
+        /* Display Card Styling */
+        .display-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 400px;
         }
-        .case-scroller { display: flex; position: absolute; left: 0; top: 10px; height: 110px; will-change: transform; }
-        .carousel-item {
-            width: 110px; height: 110px; margin-right: 6px; background-color: #1a1d2e;
-            border-bottom: 5px solid #555; flex-shrink: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+
+        .placeholder-text {
+            color: #4c566a;
+            font-style: italic;
+            margin-top: 100px;
         }
-        .carousel-item img { width: 70px; height: 70px; object-fit: contain; }
 
-        .border-Bronze { border-bottom-color: var(--color-Bronze); }
-        .border-Silver { border-bottom-color: var(--color-Silver); }
-        .border-Gold { border-bottom-color: var(--color-Gold); }
-        .border-Platinum { border-bottom-color: var(--color-Platinum); }
-        .border-Legendary { border-bottom-color: var(--color-Legendary); }
-        .border-Celestial { border-bottom-color: var(--color-Celestial); }
+        .loot-display {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-        .display-card { text-align: center; display: flex; flex-direction: column; align-items: center; min-height: 480px; }
-        .placeholder-text { color: #4c566a; font-style: italic; margin-top: 20px; }
-        .loot-display { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 15px; }
-        .rating-badge { padding: 6px 16px; border-radius: 20px; font-weight: bold; color: #000; text-transform: uppercase; font-size: 14px; margin-bottom: 15px; }
-        #item-image { width: 150px; height: 150px; object-fit: contain; border-radius: 10px; border: 3px solid #3b4252; background-color: #0f111a; padding: 10px; margin-bottom: 15px; }
-        #item-name { font-size: 24px; margin: 5px 0; }
-        #item-ability { color: #d8dee9; line-height: 1.6; max-width: 90%; background: #0f111a; padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent); text-align: left;}
+        .hidden {
+            display: none !important;
+        }
 
-        .tier-Bronze { border-color: var(--color-Bronze); box-shadow: 0 0 15px rgba(205, 127, 50, 0.4); }
-        .tier-Silver { border-color: var(--color-Silver); box-shadow: 0 0 15px rgba(192, 192, 192, 0.4); }
-        .tier-Gold { border-color: var(--color-Gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
-        .tier-Platinum { border-color: var(--color-Platinum); box-shadow: 0 0 15px rgba(229, 228, 226, 0.4); }
-        .tier-Legendary { border-color: var(--color-Legendary); box-shadow: 0 0 15px rgba(255, 69, 0, 0.6); }
-        .tier-Celestial { border-color: var(--color-Celestial); box-shadow: 0 0 25px rgba(0, 255, 255, 0.7); }
+        .rating-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #000;
+            text-transform: uppercase;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        #item-image {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 3px solid #3b4252;
+            background-color: #0f111a;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        #item-name {
+            font-size: 24px;
+            margin: 5px 0;
+        }
+
+        #item-ability {
+            color: #d8dee9;
+            line-height: 1.6;
+            max-width: 90%;
+            background: #0f111a;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent);
+            text-align: left;
+        }
+
+        /* 🎲 Dice Quick Grid Adjustments */
+        .dice-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .dice-btn-select {
+            flex: 1;
+            min-width: 50px;
+            background-color: #0f111a;
+            color: #fff;
+            border: 2px solid #3b4252;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .dice-btn-select.selected-die {
+            background-color: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent);
+        }
+
+        .total-roll-frame {
+            background: #0f111a;
+            border: 3px solid var(--accent);
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .total-roll-frame span {
+            font-size: 38px;
+            font-weight: bold;
+        }
+
+        /* Tier Styling Classes */
+        .tier-Bronze { border-color: var(--color-Bronze); }
+        .tier-Silver { border-color: var(--color-Silver); }
+        .tier-Gold { border-color: var(--color-Gold); }
+        .tier-Platinum { border-color: var(--color-Platinum); }
+        .tier-Legendary { border-color: var(--color-Legendary); }
+        .tier-Celestial { border-color: var(--color-Celestial); }
 
         .badge-Bronze { background-color: var(--color-Bronze); color: #fff; }
         .badge-Silver { background-color: var(--color-Silver); color: #000; }
@@ -159,92 +265,84 @@
         .badge-Platinum { background-color: var(--color-Platinum); color: #000; }
         .badge-Legendary { background-color: var(--color-Legendary); color: #fff; }
         .badge-Celestial { background-color: var(--color-Celestial); color: #000; }
+    </style>
+</head>
+<body>
+    <div class="container">
 
-        footer { margin-top: 40px; text-align: center; border-top: 1px solid #2e344e; padding-top: 20px; }
-        .admin-link-btn { background: none; border: none; color: #4c566a; cursor: pointer; font-size: 14px; text-decoration: underline; }
-        .admin-link-btn:hover { color: var(--accent); }
+        <!-- Nav Controls Header Tab Switches -->
+        <nav class="tab-bar">
+            <button id="loot-tab-nav" class="tab-btn active-tab" onclick="toggleActiveTab('loot-opener-tab')">📦 Loot Opener</button>
+            <button id="dice-tab-nav" class="tab-btn" onclick="toggleActiveTab('dice-roller-tab')">🎲 Dice Roller</button>
+        </nav>
 
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:100; display:flex; align-items:center; justify-content:center; }
-        .modal-content { background: var(--card-bg); border: 2px solid #3b4252; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
-        .modal-content h3 { margin-top: 0; color: var(--accent); }
-        .status-msg { font-size: 14px; font-weight: bold; margin-bottom: 15px; }
-        .status-success { color: #22c55e; }
-        .status-error { color: #ef4444; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .modal-btn { padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .modal-btn.confirm { background-color: var(--accent); color: white; }
-        .modal-btn.cancel { background-color: #3b4252; color: white; }
+        <!-- ==========================================
+           📦 ORIGINAL WORKING LOOT OPENER SECTION
+           ========================================== -->
+        <div id="loot-opener-tab" class="tab-content active-view">
+            <header>
+                <h1>🎲 DM Campaign Loot Roller 🎲</h1>
+                <p>Select a crate tier, choose your category modifier, and spin for loot!</p>
+            </header>
 
-        /* Admin Terminal Window Layout */
-        .draggable-panel {
-            position: fixed; top: 50px; right: 50px; width: 320px; background: #1e2238;
+            <div class="grid-layout">
+                <section class="controls-card">
+                    <div class="form-group">
+                        <label for="tier-select">📦 Select Box Tier:</label>
+                        <select id="tier-select">
+                            <option value="Bronze">Bronze</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Platinum">Platinum</option>
+                            <option value="Legendary">Legendary</option>
+                            <option value="Celestial">Celestial</option>
+                        </select>
+                    </div>
 
+                    <div class="form-group">
+                        <label for="category-select">🏷️ Loot Table Tag / Category:</label>
+                        <select id="category-select" onchange="swapSubDropdownOptions()">
+                            <option value="patron">Patron (Race Homeworld)</option>
+                            <option value="race">Your Character Race</option>
+                            <option value="class">Character Class</option>
+                            <option value="motivation">Character Motivation</option>
+                        </select>
+                    </div>
 
-border: 2px solid var(--accent); border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); z-index: 200; overflow: hidden;
-max-height: 75vh; display: flex; flex-direction: column;
-}
-.panel-header {
-background: #2d325a; padding: 12px; font-weight: bold; color: #fff; cursor: move;
-display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3b4252; user-select: none; flex-shrink: 0;
-}
-.close-btn { background: none; border: none; color: #a6adbb; font-size: 20px; cursor: pointer; }
-.close-btn:hover { color: #fff; }
-.panel-body { padding: 15px; overflow-y: auto; flex-grow: 1; }
-.panel-instructions { font-size: 12px; color: #a6adbb; margin-top: 0; margin-bottom: 15px; line-height: 1.4; }
-.switch-grid { display: flex; flex-direction: column; gap: 10px; }
-.switch-row { display: flex; justify-content: space-between; align-items: center; background: #151826; padding: 10px 14px; border-radius: 6px; border: 1px solid #2e344e; }
-.switch-row span { font-size: 14px; font-weight: 500; color: #e5e9f0; }
-.toggle-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3b4252; transition: .2s ease-in-out; border-radius: 24px; }
-.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .2s ease-in-out; border-radius: 50%; }
-input:checked + .slider { background-color: #22c55e; }
-input:checked + .slider:before { transform: translateX(22px); }
-.panel-body::-webkit-scrollbar { width: 6px; }
-.panel-body::-webkit-scrollbar-track { background: #1e2238; }
-.panel-body::-webkit-scrollbar-thumb { background: #3b4252; border-radius: 3px; }
-.panel-body::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+                    <div class="form-group">
+                        <label id="sub-category-label" for="sub-category-select">🌍 Select Option:</label>
+                        <select id="sub-category-select"></select>
+                    </div>
 
+                    <button id="spin-btn" class="spin-button" onclick="executeCrateRoll()">✨ Open Loot Box ✨</button>
+                </section>
 
+                <section class="display-card">
+                    <h2>Rewards Acquired</h2>
+Bronze
 
-📦 Crate Opener
-🎲 Dice Roller
-🔒 Administrator Mode
-
-Syndicate Access Verification
-
-Verify
-Cancel
-
-
-🛡️ Syndicate Director Terminal
-×
+Item Name Placeholder
+Item ability or non-magical description goes here.
 
 
-
-Bronze Crate
-Silver Crate
-Gold Crate
-Platinum Crate
-Legendary Crate
-Celestial Crate
-
-Patron Category
-Race Category
-Class Category
-Motivation Category
+Waiting for a spin...
 
 
-const MASTER_ID = "Syndicate99";
-const MASTER_PASSWORD = "Password123";
-const DATABASE_API_URL = "firebaseio.com";
-const subCategories = {
-patron: ["Terra Nova", "Zul'Kari Prime"],
-race: ["Human", "Elf"],
-class: ["Fighter", "Mage"],
-motivation: ["Revenge", "Glory"]
+
+// Data Structures Setup Config
+const dropdownMenuMaps = {
+patron: ["Terra Nova", "Zul'Kari Prime", "Chronos Station"],
+race: ["Human", "Elf", "Cyborg", "Orc"],
+class: ["Fighter", "Mage", "Rogue", "Cleric"],
+motivation: ["Revenge", "Glory", "Wealth", "Discovery"]
 };
-const lootTables = {
+const labelCopyMapping = {
+patron: "🌍 Select Race Homeworld:",
+race: "🧬 Select Your Race:",
+class: "⚔️ Select Your Class:",
+motivation: "🔥 Select Motivation:"
+};
+const staticLootTables = {
 patron: {
 "Terra Nova": {
 Bronze: [
@@ -253,239 +351,116 @@ Bronze: [
 ],
 Silver: [{ name: "Nova Laser Pointer", image: "placehold.co", ability: "Blinds organic targets temporarily up to 50 yards away." }],
 Gold: [{ name: "Energy Core", image: "placehold.co", ability: "Can power a small rover or machine." }],
-Platinum: [{ name: "Nano Medkit", image: "placehold.co", ability: "Instantly knits light flesh wounds closed." }],
-Legendary: [{ name: "Vibroblade", image: "placehold.co", ability: "High frequency blade that cleanly slices titanium." }],
-Celestial: [{ name: "Chronos Matrix", image: "placehold.co", ability: "Rewinds local reality time space by exactly 3 seconds." }]
+Platinum: [], Legendary: [], Celestial: []
 },
-"Zul'Kari Prime": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+"Zul'Kari Prime": { Bronze: [{ name: "Acid-Weave Scrap", image: "placehold.co", ability: "Acid-resistant padding handles." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+"Chronos Station": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
 },
 race: {
-"Human": { Bronze: [{ name: "Multi-tool", image: "placehold.co", ability: "Standard maintenance tools." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
-"Elf": { Bronze: [{ name: "Twig Charm", image: "placehold.co", ability: "Minor tracking buffs in deep woodlands." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+"Human": { Bronze: [{ name: "Standard Issue Multi-tool", image: "placehold.co", ability: "Acts as basic toolkit utilities." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+"Elf": { Bronze: [{ name: "Sylvan Twig Charm", image: "placehold.co", ability: "Minor tracking buffs inside woodlands." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+"Cyborg": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }, "Orc": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
 },
 class: {
-"Fighter": { Bronze: [{ name: "Whetstone Kit", image: "placehold.co", ability: "Maintains weapons cleanly." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
-"Mage": { Bronze: [{ name: "Ink & Quill", image: "placehold.co", ability: "Logging system notes." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+"Fighter": { Bronze: [{ name: "Whetstone & Oil Kit", image: "placehold.co", ability: "Maintains blades to prevent edge dulling." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+"Mage": { Bronze: [{ name: "Ink Vial & Quill", image: "placehold.co", ability: "Log arcana or notes cleanly." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+"Rogue": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }, "Cleric": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
 },
 motivation: {
-"Revenge": { Bronze: [{ name: "Target Dossier", image: "placehold.co", ability: "Sketches on loose targets." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
-"Glory": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+"Revenge": { Bronze: [{ name: "Target Bounty Dossier", image: "placehold.co", ability: "Contains info about loose criminal target cells." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+"Glory": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }, "Wealth": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }, "Discovery": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
 }
 };
-const tierList = ["Bronze", "Silver", "Gold", "Platinum", "Legendary", "Celestial"];
-const categoriesList = ["patron", "race", "class", "motivation"];
-let serverStates = {
-Bronze: true, Silver: true, Gold: true, Platinum: true, Legendary: true, Celestial: true,
-cat_patron: true, cat_race: true, cat_class: true, cat_motivation: true
-};
-let selectedDieSides = 20;
-function switchTab(viewId) {
-document.querySelectorAll('.tab-content-view').forEach(view => view.classList.add('hidden'));
-document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active-tab'));
-const targetView = document.getElementById(viewId);
-if (targetView) targetView.classList.remove('hidden');
-if (viewId === 'loot-view') document.getElementById('tab-loot-btn').classList.add('active-tab');
-if (viewId === 'dice-view') document.getElementById('tab-dice-btn').classList.add('active-tab');
-}
-function selectDieType(sides) {
-selectedDieSides = sides;
-document.querySelectorAll('.dice-select-btn').forEach(btn => btn.classList.remove('active-die'));
-const allButtons = Array.from(document.querySelectorAll('.dice-select-btn'));
-const targetButton = allButtons.find(btn => btn.textContent === d${sides});
-if (targetButton) targetButton.classList.add('active-die');
-}
-function rollDiceEngine() {
-const countInput = document.getElementById('dice-count');
-const modInput = document.getElementById('dice-modifier');
-let count = parseInt(countInput.value) || 1;
-let modifier = parseInt(modInput.value) || 0;
-if (count < 1) count = 1;
-if (count > 100) count = 100;
-let rolls = [];
-let rollsTotalSum = 0;
-for (let i = 0; i < count; i++) {
-let rolledValue = Math.floor(Math.random() * selectedDieSides) + 1;
-rolls.push(rolledValue);
-rollsTotalSum += rolledValue;
-}
-let finalTotalScore = rollsTotalSum + modifier;
-document.getElementById('dice-placeholder').classList.add('hidden');
-document.getElementById('dice-result-container').classList.remove('hidden');
-document.getElementById('dice-total-output').textContent = finalTotalScore;
-let breakdownString = rolls.join(' + ');
-if (modifier !== 0) {
-breakdownString += (modifier > 0 ? + ${modifier} (Mod) : - ${Math.abs(modifier)} (Mod));
-}
-document.getElementById('dice-breakdown-output').textContent = (${breakdownString});
-const historyList = document.getElementById('dice-history-list');
-const logItem = document.createElement('li');
-let timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-logItem.textContent = [${timestamp}] Rolled ${count}d${selectedDieSides}${modifier >= 0 ? '+' : ''}${modifier} ➔ Total: ${finalTotalScore};
-historyList.insertBefore(logItem, historyList.firstChild);
-}
+// DOM Handles Hooks
+let categorySelect, subCategorySelect, subCategoryLabel, tierSelect, spinBtn, placeholderText, lootDisplayContainer, itemRatingBadge, itemImage, itemName, itemAbility;
+let activeDiceSides = 20;
 document.addEventListener("DOMContentLoaded", () => {
-const categorySelect = document.getElementById('category-select');
-const subCategorySelect = document.getElementById('sub-category-select');
-const subCategoryLabel = document.getElementById('sub-category-label');
-const tierSelect = document.getElementById('tier-select');
-const spinBtn = document.getElementById('spin-btn');
-const scroller = document.getElementById('case-scroller');
-const lockoutNotice = document.getElementById('lockout-notice');
-const placeholderText = document.getElementById('placeholder-text');
-const lootDisplayContainer = document.getElementById('loot-display-container');
-const itemRatingBadge = document.getElementById('item-rating-badge');
-const itemImage = document.getElementById('item-image');
-const itemName = document.getElementById('item-name');
-const itemAbility = document.getElementById('item-ability');
-const adminTriggerBtn = document.getElementById('admin-trigger-btn');
-const loginModal = document.getElementById('login-modal');
-const loginCancelBtn = document.getElementById('login-cancel-btn');
-const loginSubmitBtn = document.getElementById('login-submit-btn');
-const adminIdInput = document.getElementById('admin-id-input');
-const adminPassInput = document.getElementById('admin-pass-input');
-const loginStatusMsg = document.getElementById('login-status-msg');
-const adminPanel = document.getElementById('admin-panel');
-const adminPanelHeader = document.getElementById('admin-panel-header');
-const closePanelBtn = document.getElementById('close-panel-btn');
-const labelMapping = { patron: "🌍 Select Race Homeworld:", race: "🧬 Select Your Race:", class: "⚔️ Select Your Class:", motivation: "🔥 Select Motivation:" };
-const nameMapping = { patron: "Patron (Race Homeworld)", race: "Your Character Race", class: "Character Class", motivation: "Character Motivation" };
-function updateCategoryDropdownOptions() {
-if (!categorySelect) return;
-const currentSelection = categorySelect.value;
-categorySelect.innerHTML = "";
-let activeCategoriesCount = 0;
-categoriesList.forEach(catKey => {
-if (serverStates[cat_${catKey}] !== false) {
-const opt = document.createElement('option');
-opt.value = catKey;
-opt.textContent = nameMapping[catKey];
-categorySelect.appendChild(opt);
-activeCategoriesCount++;
-}
+categorySelect = document.getElementById('category-select');
+subCategorySelect = document.getElementById('sub-category-select');
+subCategoryLabel = document.getElementById('sub-category-label');
+tierSelect = document.getElementById('tier-select');
+spinBtn = document.getElementById('spin-btn');
+placeholderText = document.getElementById('placeholder-text');
+lootDisplayContainer = document.getElementById('loot-display-container');
+itemRatingBadge = document.getElementById('item-rating-badge');
+itemImage = document.getElementById('item-image');
+itemName = document.getElementById('item-name');
+itemAbility = document.getElementById('item-ability');
+// Initialize original setup layout defaults
+swapSubDropdownOptions();
 });
-if (activeCategoriesCount === 0) {
-const opt = document.createElement('option');
-opt.value = "none"; opt.textContent = "⚠️ All Options Locked by DM";
-categorySelect.appendChild(opt);
-if (subCategorySelect) subCategorySelect.innerHTML = "";
-if (subCategoryLabel) subCategoryLabel.textContent = "Locked Element Handler:";
-if (spinBtn) spinBtn.disabled = true;
-return;
+// 🧭 Tab Switch System
+function toggleActiveTab(tabViewId) {
+document.querySelectorAll('.tab-content').forEach(view => view.classList.remove('active-view'));
+document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+document.getElementById(tabViewId).classList.add('active-view');
+if (tabViewId === 'loot-opener-tab') document.getElementById('loot-tab-nav').classList.add('active-tab');
+if (tabViewId === 'dice-roller-tab') document.getElementById('dice-tab-nav').classList.add('active-tab');
 }
-if (serverStates[cat_${currentSelection}] !== false && currentSelection !== "") {
-categorySelect.value = currentSelection;
-}
-updateSubCategories();
-}
-function updateSubCategories() {
+// Dropdown Synchronizer Options
+function swapSubDropdownOptions() {
 if (!categorySelect || !subCategorySelect || !subCategoryLabel) return;
-const selectedCategory = categorySelect.value;
-if (selectedCategory === "none" || !subCategories[selectedCategory]) {
-subCategorySelect.innerHTML = ""; return;
-}
-subCategoryLabel.textContent = labelMapping[selectedCategory];
+const category = categorySelect.value;
+subCategoryLabel.textContent = labelCopyMapping[category];
 subCategorySelect.innerHTML = "";
-subCategories[selectedCategory].forEach(option => {
-const optElement = document.createElement('option');
-optElement.value = option; optElement.textContent = option;
-subCategorySelect.appendChild(optElement);
+dropdownMenuMaps[category].forEach(opt => {
+const element = document.createElement('option');
+element.value = opt;
+element.textContent = opt;
+subCategorySelect.appendChild(element);
 });
-checkActiveTierStatus();
 }
-function checkActiveTierStatus() {
-if (!categorySelect || !tierSelect || !spinBtn || !lockoutNotice) return;
-if (categorySelect.value === "none") { spinBtn.disabled = true; return; }
-const selectedTier = tierSelect.value;
-if (serverStates[selectedTier] === false) {
-spinBtn.disabled = true; lockoutNotice.classList.remove('hidden');
-} else {
-spinBtn.disabled = false; lockoutNotice.classList.add('hidden');
-}
-}
-function syncFromCloudDatabase() {
-if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
-fetch(DATABASE_API_URL).then(res => res.json()).then(data => {
-if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-serverStates = data;
-tierList.forEach(t => { const cb = document.getElementById(sw-${t}); if (cb) cb.checked = (data[t] !== false); });
-categoriesList.forEach(c => { const cb = document.getElementById(sw-cat-${c}); if (cb) cb.checked = (data[cat_${c}] !== false); });
-updateCategoryDropdownOptions();
-}
-}).catch(err => console.log("Cloud status synchronized."));
-}
-function pushLockoutStateToCloud() {
-if (!DATABASE_API_URL || DATABASE_API_URL.includes("your-project-id")) return;
-fetch(DATABASE_API_URL, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serverStates) });
-}
-function spinLootBox() {
+// Crate Rolling Math Engine
+function executeCrateRoll() {
 const tier = tierSelect.value;
 const category = categorySelect.value;
 const subCategory = subCategorySelect.value;
-if (serverStates[tier] === false || category === "none") return;
-const winningPool = lootTables[category]?.[subCategory]?.[tier];
-if (!winningPool || winningPool.length === 0) { alert(No items programmed inside the [${tier}] table.); return; }
-const winnerItem = winningPool[Math.floor(Math.random() * winningPool.length)];
-spinBtn.disabled = true; lootDisplayContainer.classList.add('hidden'); placeholderText.classList.remove('hidden');
-placeholderText.textContent = "Unboxing crate...";
-scroller.innerHTML = ""; scroller.style.transition = "none"; scroller.style.transform = "translateX(0px)";
-const totalItemsCount = 30; const winningIndex = 25; scroller.offsetHeight;
-for (let i = 0; i < totalItemsCount; i++) {
-let displayItem, displayTier;
-if (i === winningIndex) { displayItem = winnerItem; displayTier = tier; }
-else {
-displayTier = tierList[Math.floor(Math.random() * tierList.length)];
-const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
-displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
+const targetedPool = staticLootTables[category]?.[subCategory]?.[tier];
+if (!targetedPool || targetedPool.length === 0) {
+alert(No items found inside the programmed [${tier}] table for [${subCategory}].);
+return;
 }
-const slot = document.createElement('div'); slot.className = carousel-item border-${displayTier};
-const img = document.createElement('img'); img.src = displayItem.image; slot.appendChild(img); scroller.appendChild(slot);
+const rollIndex = Math.floor(Math.random() * targetedPool.length);
+const rewardItem = targetedPool[rollIndex];
+placeholderText.classList.add('hidden');
+lootDisplayContainer.classList.remove('hidden');
+lootDisplayContainer.className = "loot-display tier-" + tier;
+itemRatingBadge.className = "rating-badge badge-" + tier;
+itemRatingBadge.textContent = tier + " Quality";
+itemName.textContent = rewardItem.name;
+itemImage.src = rewardItem.image;
+itemAbility.textContent = rewardItem.ability;
 }
-const itemTotalWidth = 116; const containerWidth = document.querySelector('.case-container').offsetWidth;
-const centerOffset = containerWidth / 2; const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
-const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
-scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
-scroller.style.transform = translateX(-${targetDistance}px);
-setTimeout(() => {
-checkActiveTierStatus(); placeholderText.classList.add('hidden'); lootDisplayContainer.classList.remove('hidden');
-lootDisplayContainer.className = "loot-display tier-" + tier; itemRatingBadge.className = "rating-badge badge-" + tier;
-itemRatingBadge.textContent = tier + " Quality"; itemName.textContent = winnerItem.name;
-itemImage.src = winnerItem.image; itemAbility.textContent = winnerItem.ability;
-}, 4500);
+// 🎲 Dice Roller Operations
+function setActiveDieSides(sides) {
+activeDiceSides = sides;
+document.querySelectorAll('.dice-btn-select').forEach(btn => btn.classList.remove('selected-die'));
+const matchBtn = Array.from(document.querySelectorAll('.dice-btn-select')).find(btn => btn.textContent === d${sides});
+if (matchBtn) matchBtn.classList.add('selected-die');
 }
-function getFillerItemPool(cat, sub, tier) {
-if (cat === "none") return null;
-for (let c in lootTables) { for (let s in lootTables[c]) { if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier]; if (lootTables[c][s][tier]?.length > 0) return lootTables[c][s][tier]; } }
-return null;
+function runDiceCalculation() {
+const qtyInput = document.getElementById('dice-count-input');
+const modInput = document.getElementById('dice-flat-modifier');
+let qty = parseInt(qtyInput.value) || 1;
+let mod = parseInt(modInput.value) || 0;
+if (qty < 1) qty = 1;
+if (qty > 50) qty = 50;
+let rollsArray = [];
+let rollAccumulator = 0;
+for (let i = 0; i < qty; i++) {
+let rolledVal = Math.floor(Math.random() * activeDiceSides) + 1;
+rollsArray.push(rolledVal);
+rollAccumulator += rolledVal;
 }
-if (adminTriggerBtn) {
-adminTriggerBtn.addEventListener('click', () => {
-loginModal.classList.remove('hidden'); loginStatusMsg.className = "status-msg"; loginStatusMsg.textContent = ""; adminIdInput.value = ""; adminPassInput.value = "";
-});
+let masterTotal = rollAccumulator + mod;
+document.getElementById('dice-placeholder-label').classList.add('hidden');
+document.getElementById('dice-output-panel').classList.remove('hidden');
+document.getElementById('dice-total-box-span').textContent = masterTotal;
+let rollString = rollsArray.join(' + ');
+if (mod !== 0) {
+rollString += (mod > 0 ? + ${mod} (Mod) : - ${Math.abs(mod)} (Mod));
 }
-if (loginCancelBtn) loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
-if (loginSubmitBtn) {
-loginSubmitBtn.addEventListener('click', () => {
-const enteredID = adminIdInput.value.trim(); const enteredPass = adminPassInput.value.trim();
-if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
-loginStatusMsg.className = "status-msg status-success"; loginStatusMsg.textContent = "Successful, logging in...";
-setTimeout(() => { loginModal.classList.add('hidden'); adminPanel.classList.remove('hidden'); adminPanel.style.top = "100px"; adminPanel.style.right = "50px"; adminPanel.style.left = "auto"; }, 1200);
-} else { loginStatusMsg.className = "status-msg status-error"; loginStatusMsg.textContent = "Invalid Credentials. Access Denied."; }
-});
+document.getElementById('dice-breakdown-text-span').textContent = (${rollString});
 }
-if (closePanelBtn) closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
-tierList.forEach(t => { const el = document.getElementById(sw-${t}); if (el) { el.addEventListener('change', (e) => { serverStates[t] = e.target.checked; pushLockoutStateToCloud(); checkActiveTierStatus(); }); } });
-categoriesList.forEach(c => { const el = document.getElementById(sw-cat-${c}); if (el) { el.addEventListener('change', (e) => { serverStates[cat_${c}] = e.target.checked; pushLockoutStateToCloud(); updateCategoryDropdownOptions(); }); } });
-let isDragging = false; let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
-if (adminPanelHeader) { adminPanelHeader.addEventListener('mousedown', (e) => { initialX = e.clientX - xOffset; initialY = e.clientY - yOffset; if (e.target === adminPanelHeader) isDragging = true; }); }
-document.addEventListener('mousemove', (e) => { if (isDragging && adminPanel) { e.preventDefault(); currentX = e.clientX - initialX; currentY = e.clientY - initialY; xOffset = currentX; yOffset = currentY; adminPanel.style.transform = translate(${currentX}px, ${currentY}px); } });
-document.addEventListener('mouseup', () => { initialX = currentX; initialY = currentY; isDragging = false; });
-if (categorySelect) categorySelect.addEventListener('change', updateSubCategories);
-if (tierSelect) tierSelect.addEventListener('change', checkActiveTierStatus);
-if (spinBtn) spinBtn.addEventListener('click', spinLootBox);
-updateCategoryDropdownOptions();
-setInterval(syncFromCloudDatabase, 3000);
-});
-
-
 
 
