@@ -1,0 +1,74 @@
+<!-- Save this file as: index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DM Loot Box Roller</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 DM Campaign Loot Roller 🎲</h1>
+            <p>Select a crate tier, choose your category modifier, and spin for loot!</p>
+        </header>
+
+        <main class="grid-layout">
+            <!-- Left Side: Controls -->
+            <section class="controls-card">
+                <!-- 1. Tier Selection -->
+                <div class="form-group">
+                    <label for="tier-select">📦 Select Box Tier:</label>
+                    <select id="tier-select">
+                        <option value="Bronze">Bronze</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Platinum">Platinum</option>
+                        <option value="Legendary">Legendary</option>
+                        <option value="Celestial">Celestial</option>
+                    </select>
+                </div>
+
+                <!-- 2. Loot Table Configuration Category -->
+                <div class="form-group">
+                    <label for="category-select">🏷️ Loot Table Tag / Category:</label>
+                    <select id="category-select">
+                        <option value="patron">Patron (Race Homeworld)</option>
+                        <option value="race">Your Character Race</option>
+                        <option value="class">Character Class</option>
+                        <option value="motivation">Character Motivation</option>
+                    </select>
+                </div>
+
+                <!-- 3. Dynamic Sub-Category Dropdown -->
+                <div class="form-group">
+                    <label id="sub-category-label" for="sub-category-select">🌍 Select Option:</label>
+                    <select id="sub-category-select">
+                        <!-- Options injected automatically by script.js -->
+                    </select>
+                </div>
+
+                <!-- Spin Button -->
+                <button id="spin-btn" class="spin-button">✨ Open Loot Box ✨</button>
+            </section>
+
+            <!-- Right Side: Display Results -->
+            <section class="display-card">
+                <h2>Rewards Acquired</h2>
+                <div id="loot-display-container" class="loot-display hidden">
+                    <div id="item-rating-badge" class="rating-badge">Bronze</div>
+                    <img id="item-image" src="https://placeholder.com" alt="Loot Reward Image">
+                    <h3 id="item-name">Item Name Placeholder</h3>
+                    <p id="item-ability">Item ability or non-magical description goes here.</p>
+                </div>
+                <div id="placeholder-text" class="placeholder-text">
+                    Waiting for a spin...
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
