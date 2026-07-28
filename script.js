@@ -1,10 +1,9 @@
 // ==========================================
-// 🔐 SECURE CRYPTOGRAPHIC PROFILE CONFIGURATION
+// 🔐 DIRECT PROFILE CONFIGURATION
 // ==========================================
-// These are SHA-256 hashes of your login credentials. 
-// Your actual text passwords are completely hidden and cannot be reversed!
-const HASHED_ID = "617b4ec8fa802613df0d59265f6c8d76dbcb15ef23938ea5f0eb627447493796";       // Hash of "Syndicate99"
-const HASHED_PASSWORD = "ef92b778bafe42552345d620a2ec70e22709bbf1b7168c783e782987114b7b25"; // Hash of "Password123"
+const MASTER_ID = "Syndicate99";
+const MASTER_PASSWORD = "Password123";
+
 
 // ==========================================
 // 📡 DATABASE CONFIGURATION LINK
@@ -248,11 +247,11 @@ adminTriggerBtn.addEventListener('click', () => {
 
 loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
 
-loginSubmitBtn.addEventListener('click', async () => {
-    const inputIDHash = await sha256(adminIdInput.value);
-    const inputPassHash = await sha256(adminPassInput.value);
+loginSubmitBtn.addEventListener('click', () => {
+    const enteredID = adminIdInput.value.trim();
+    const enteredPass = adminPassInput.value.trim();
     
-    if (inputIDHash === HASHED_ID && inputPassHash === HASHED_PASSWORD) {
+    if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
         loginStatusMsg.className = "status-msg status-success";
         loginStatusMsg.textContent = "Successful, logging in...";
         
@@ -268,6 +267,7 @@ loginSubmitBtn.addEventListener('click', async () => {
         loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
     }
 });
+
 
 closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
 
