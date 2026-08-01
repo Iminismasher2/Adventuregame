@@ -240,105 +240,95 @@ function pushLockoutStateToCloud() {
 // ==========================================
 // 🕹️ CS:GO CAROUSEL ENGINE LOGIC
 // ==========================================
+    // ==========================================
+    // 🕹️ DECIMAL-SAFE WEIGHTED SPIN MECHANICS
+    // ==========================================
     function spinLootBox() {
         const tier = tierSelect.value;
         const category = categorySelect.value;
         const subCategory = subCategorySelect.value;
         
-        if (serverStates[tier] === false || category === "none") return;
+        if (serverStates[tier] === false || category === "none") return; 
         const winningPool = lootTables[category]?.[subCategory]?.[tier];
-        if (!winningPool || winningPool.length === 0) {
-            alert(`No items programmed inside the [${tier}] table.`);
-            return;
-        }
-
-        // Calculate the total combined weights of all matching table items
+        if (!winningPool || winningPool.length === 0) { alert(`No items programmed inside the [${tier}] table.`); return; }
+        
+        // 1. Calculate the total combined weights (Safe for decimals like 0.3 or 0.01)
         let totalWeight = 0;
         winningPool.forEach(item => {
-            totalWeight += (item.weight || 1); // Defaults to a weight of 1 if you forget to write it
+            totalWeight += (parseFloat(item.weight) || 1.0); 
         });
 
-        // Fire a random decimal roll marker inside the total boundary limits
+        // 2. Pick a random number between 0 and your total weight sum
         let randomRoll = Math.random() * totalWeight;
-        let winnerItem = winningPool[0]; // Baseline protection map fallback
+        let winnerItem = winningPool[0]; // Baseline protection fallback
 
-        // Loop array and subtract weights to trap the rolled target item card step
+        // 3. Accumulate weights upward. This prevents decimal math calculation crashes!
+        let weightAccumulator = 0;
         for (let i = 0; i < winningPool.length; i++) {
-            randomRoll -= (winningPool[i].weight || 1);
-            if (randomRoll <= 0) {
+            weightAccumulator += (parseFloat(winningPool[i].weight) || 1.0);
+            if (randomRoll <= weightAccumulator) {
                 winnerItem = winningPool[i];
                 break;
             }
         }
 
         // Lock button interaction frames and trigger unboxing panel masks layout
-        spinBtn.disabled = true;
-        lootDisplayContainer.classList.add('hidden');
+        spinBtn.disabled = true; 
+        lootDisplayContainer.classList.add('hidden'); 
         placeholderText.classList.remove('hidden');
         placeholderText.textContent = "Unboxing crate...";
         
-        scroller.innerHTML = "";
-        scroller.style.transition = "none";
+        scroller.innerHTML = ""; 
+        scroller.style.transition = "none"; 
         scroller.style.transform = "translateX(0px)";
         
-        const totalItemsCount = 30;
-        const winningIndex = 25;
+        const totalItemsCount = 30; 
+        const winningIndex = 25; 
         scroller.offsetHeight; // Forces a browser view layout repaint refresh frame
 
         // Build the background filler track rows side-by-side array
         for (let i = 0; i < totalItemsCount; i++) {
             let displayItem, displayTier;
-            if (i === winningIndex) {
-                displayItem = winnerItem;
-                displayTier = tier;
+            if (i === winningIndex) { 
+                displayItem = winnerItem; 
+                displayTier = tier; 
             } else {
                 displayTier = tierList[Math.floor(Math.random() * tierList.length)];
                 const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
                 displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
             }
-            const slot = document.createElement('div');
+            const slot = document.createElement('div'); 
             slot.className = `carousel-item border-${displayTier}`;
-            
-            const img = document.createElement('img');
-            img.src = displayItem.image;
-            slot.appendChild(img);
+            const img = document.createElement('img'); 
+            img.src = displayItem.image; 
+            slot.appendChild(img); 
             scroller.appendChild(slot);
         }
-
-        const itemTotalWidth = 116;
+        
+        const itemTotalWidth = 116; 
         const containerWidth = document.querySelector('.case-container').offsetWidth;
-        const centerOffset = containerWidth / 2;
+        const centerOffset = containerWidth / 2; 
         const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
         const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
-
+        
         // Execute the 4.5-second easing speed strip curve transform transition
         scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
         scroller.style.transform = `translateX(-${targetDistance}px)`;
-
+        
         setTimeout(() => {
-            checkActiveTierStatus();
-            placeholderText.classList.add('hidden');
+            checkActiveTierStatus(); 
+            placeholderText.classList.add('hidden'); 
             lootDisplayContainer.classList.remove('hidden');
             
-            lootDisplayContainer.className = "loot-display tier-" + tier;
+            lootDisplayContainer.className = "loot-display tier-" + tier; 
             itemRatingBadge.className = "rating-badge badge-" + tier;
-            itemRatingBadge.textContent = tier.replace('_', ' ') + " Quality";
+            itemRatingBadge.textContent = tier.replace('_', ' ') + " Quality"; 
             itemName.textContent = winnerItem.name;
-            itemImage.src = winnerItem.image;
+            itemImage.src = winnerItem.image; 
             itemAbility.textContent = winnerItem.ability;
         }, 4500);
     }
 
-    function getFillerItemPool(cat, sub, tier) {
-        if (cat === "none") return null;
-        for (let c in lootTables) {
-            for (let s in lootTables[c]) {
-                if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier];
-                if (lootTables[c][s][tier]?.length > 0) return lootTables[c][s][tier];
-            }
-        }
-        return null;
-    }
 
     // ==========================================
     // 🔒 ADMIN AUTH & MODAL ACCESS LISTENERS
