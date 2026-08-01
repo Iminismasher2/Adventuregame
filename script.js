@@ -425,5 +425,5 @@ function pushLockoutStateToCloud() {
 
     updateCategoryDropdownOptions();
     setInterval(syncFromCloudDatabase, 3000);
-});
+);
 
