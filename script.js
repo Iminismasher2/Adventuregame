@@ -43,7 +43,7 @@ const lootTables = {
                 { name: "Knuckle Dusters", image: "https://i.imgur.com/j4uQzYx.jpeg", ability: "A set of bronze knuckle dusters, good for brawling", weight: 15 },
                 { name: "Focusing Cigar", image: "https://i.imgur.com/NtUq9Yt.jpeg", ability: "This magical cigar will give an additional die on Notice, Tempt, or Scholarship for your next roll.", weight: .99 },
                 { name: "Chicken Bomb", image: "https://i.imgur.com/VzZeeAB.jpeg", ability: "A bomb... of a chicken?! Deals an injury to those in a 35 ft radius when it goes off, though you do have to crank it.", weight: 2 },
-                { name: "Fists of Fury", image: "https://i.imgur.com/FeuKqnz.jpeg", ability: "(Unique item) A common magic item that will deal extra damage the more FIRED UP you are in a fight! Will deal 1 extra damage if you are FIRED UP!!", isUnique: true, weight: .01 },
+                { name: "Fists of Fury", image: "https://i.imgur.com/FeuKqnz.jpeg", ability: "(Unique item) A common magic item that will deal extra damage the more FIRED UP you are in a fight! Will deal 1 extra damage if you are FIRED UP!!", weight: .01 },
                 { name: "Rations (1 day) x6", image: "https://i.imgur.com/ECtwIS0.jpeg", ability: "Pig.", weight: 17 },
                 { name: "Ring of agility", image: "https://i.imgur.com/oARlWkt.jpeg", ability: "A ring that, once put on, will give an extra 10 ft of movement per turn.", weight: 2 },
                 { name: "Health Potion", image: "https://i.imgur.com/6PUUvl7.jpeg", ability: "A potion that heals most minor to major injuries at least partially. Tastes terrible though, unless you're into terrible things like you.", weight: 28 },
@@ -60,11 +60,11 @@ const lootTables = {
                            { name: "Crab Pendant", image: "https://i.imgur.com/Yovece6.jpeg", ability: "Once the gem is broken, a massive iron crab spawns as a temporary spawn to attack the enemies for the combat. Desummoning afterwards and the pendant becoming useless", weight: 1 },
                            { name: "Corpse mask", image: "https://i.imgur.com/X9PFd87.jpeg", ability: "This is a single use item, don't mind the image. You can imitate someones appearnce that is dead for upwards of 24 hours, afterwards the mask burns away.", weight: 1 },
                            { name: "Friction wraps", image: "https://i.imgur.com/GVQFZum.jpeg", ability: "Hits deal additional fire damage the more you squeeze the leather.", weight: 1 },
-                           { name: "Monster Compass", image: "https://i.imgur.com/7Z62AZQ.jpeg", ability: "(Unique item) Can only be used on 1 floor, use it wisely.", weight: 0.33333333333, isUnique: true },
-                           { name: "Replacement Man", image: "https://i.imgur.com/eOK1zPt.jpeg", ability: "(Unique item) If you were to die, you survive barely (a shame).", weight: 0.33333333333, isUnique: true },
+                           { name: "Monster Compass", image: "https://i.imgur.com/7Z62AZQ.jpeg", ability: "(Unique item) Can only be used on 1 floor, use it wisely.", weight: 0.3 },
+                           { name: "Replacement Man", image: "https://i.imgur.com/eOK1zPt.jpeg", ability: "(Unique item) If you were to die, you survive barely (a shame).", weight: 0.3},
                            { name: "Invisibility Timer", image: "https://i.imgur.com/gzO8T8p.jpeg", ability: "This has 3 uses overrall, where it will then blow up (small explosion, don't worry).", weight: 5 },
                            { name: "Matress of comfortability", image: "https://i.imgur.com/KivTXVo.jpeg", ability: "Feels like the most comfy bed you've ever slept on, except its not and you are in a murder tv show. Happy dreaming!", weight: 1 },
-                           { name: "Droplet charm", image: "https://i.imgur.com/i6TDMYp.jpeg", ability: "(Unique Item) Would not... break that charm, no matter his demands (He's lying)", weight: 0.33333333333, isUnique: true },
+                           { name: "Droplet charm", image: "https://i.imgur.com/i6TDMYp.jpeg", ability: "(Unique Item) Would not... break that charm, no matter his demands (He's lying)", weight: 0.3 },
                            { name: "Head of BOOM!", image: "https://i.imgur.com/hUniWEY.jpeg", ability: "More head (people), more explosion! Explosion big damage, cap 3 most damage.", weight: 14 },
                            { name: "Axegun", image: "https://i.imgur.com/K7da1im.jpeg", ability: "A hand axe that shoots... like a gun, preeetttyyy self-explanatory.", weight: 5 },
                            { name: "Peace Pipe", image: "https://i.imgur.com/Nz9E2oH.jpeg", ability: "Ooohhh yeah thats that good shit, getting someone to smoke this will give 2 die when using tempt towards them.", weight: 25 },
@@ -240,44 +240,30 @@ function pushLockoutStateToCloud() {
 // ==========================================
 // 🕹️ CS:GO CAROUSEL ENGINE LOGIC
 // ==========================================
-// We track unique items that have been wiped out in this master memory map
-let serverUniqueWipedItems = {};
-
 function spinLootBox() {
     const tier = tierSelect.value;
     const category = categorySelect.value;
     const subCategory = subCategorySelect.value;
     
     if (serverStates[tier] === false || category === "none") return; 
-    let rawPool = lootTables[category]?.[subCategory]?.[tier];
-    if (!rawPool || rawPool.length === 0) { alert(`No items programmed inside the [${tier}] table.`); return; }
+    const winningPool = lootTables[category]?.[subCategory]?.[tier];
+    if (!winningPool || winningPool.length === 0) { alert(`No items programmed inside the [${tier}] table.`); return; }
     
-    // ==========================================
-    // 🛡️ UNIQUE ITEM FILTERING LAYER
-    // ==========================================
-    // Dynamically filter out any unique items that have already been unboxed globally
-    let winningPool = rawPool.filter(item => {
-        const itemGlobalKey = `${category}_${subCategory}_${tier}_${item.name.replace(/\s+/g, '_')}`;
-        return serverUniqueWipedItems[itemGlobalKey] !== true;
-    });
-
-    if (winningPool.length === 0) {
-        alert(`All items (including Uniques) have been claimed from the [${tier}] crate for this option!`);
-        return;
-    }
-    // ==========================================
-
     // ==========================================
     // 🎲 WEIGHTED RANDOM SELECTION ENGINE
     // ==========================================
+    // Calculate the total weight sum of all items in this pool
     let totalWeight = 0;
     winningPool.forEach(item => {
+        // Fallback to 1 if you forget to add a weight property to an item
         totalWeight += (item.weight || 1); 
     });
 
+    // Roll a random number between 0 and the total weight sum
     let randomRoll = Math.random() * totalWeight;
-    let winnerItem = winningPool[0]; 
+    let winnerItem = winningPool[0];
 
+    // Loop through the items and subtract their weights until we hit 0
     for (let i = 0; i < winningPool.length; i++) {
         randomRoll -= (winningPool[i].weight || 1);
         if (randomRoll <= 0) {
@@ -317,36 +303,9 @@ function spinLootBox() {
         lootDisplayContainer.className = "loot-display tier-" + tier; itemRatingBadge.className = "rating-badge badge-" + tier;
         itemRatingBadge.textContent = tier + " Quality"; itemName.textContent = winnerItem.name;
         itemImage.src = winnerItem.image; itemAbility.textContent = winnerItem.ability;
-
-        // 🌟 IF THE WINNER IS UNIQUE: Flag it and save it to the cloud instantly
-        if (winnerItem.isUnique) {
-            const itemGlobalKey = `${category}_${subCategory}_${tier}_${winnerItem.name.replace(/\s+/g, '_')}`;
-            serverUniqueWipedItems[itemGlobalKey] = true;
-            pushUniqueWipeStateToCloud();
-        }
     }, 4500);
 }
 
-// Add these companion background helpers right below the spinLootBox function:
-function pushUniqueWipeStateToCloud() {
-    const UNIQUE_API_URL = "https://firebaseio.com";
-    if (UNIQUE_API_URL.includes("your-project-id")) return;
-    fetch(UNIQUE_API_URL, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(serverUniqueWipedItems)
-    }).catch(err => console.log("Cloud save failure for unique list:", err));
-}
-
-function syncUniqueWipeStateFromCloud() {
-    const UNIQUE_API_URL = "https://firebaseio.com";
-    if (UNIQUE_API_URL.includes("your-project-id")) return;
-    fetch(UNIQUE_API_URL)
-        .then(res => res.json())
-        .then(data => {
-            if (data) serverUniqueWipedItems = data;
-        }).catch(err => console.log("Unique list read error:", err));
-}
 
 
 
