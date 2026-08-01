@@ -55,7 +55,7 @@ const lootTables = {
             
         ], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
         "Elf": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
-        "Goblin": { Bronze: [{ name: "Twig Charm", image: "https://placehold.co", ability: "Minor tracking buffs in deep woodlands." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+        "Goblin": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
         "Boss": { Bronze: [{ name: "Hush darts", image: "https://i.imgur.com/d4G8yCU.jpeg", ability: "3 darts, that once thrown into someone will prevent them from speaking, talking, or hearing for a minute. Once used, the dart dissolves.", weight: 1 },
                            { name: "Crab Pendant", image: "https://i.imgur.com/Yovece6.jpeg", ability: "Once the gem is broken, a massive iron crab spawns as a temporary spawn to attack the enemies for the combat. Desummoning afterwards and the pendant becoming useless", weight: 1 },
                            { name: "Corpse mask", image: "https://i.imgur.com/X9PFd87.jpeg", ability: "This is a single use item, don't mind the image. You can imitate someones appearnce that is dead for upwards of 24 hours, afterwards the mask burns away.", weight: 1 },
@@ -74,8 +74,8 @@ const lootTables = {
                           ], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
     },
     class: {
-        "Fighter": { Bronze: [{ name: "Whetstone Kit", image: "https://placehold.co", ability: "Maintains weapons cleanly." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
-        "Mage": { Bronze: [{ name: "Ink & Quill", image: "https://placehold.co", ability: "Logging system notes." }], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
+        "Fighter": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
+        "Mage": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] }
     },
     motivation: {
         "Revenge": { Bronze: [], Silver: [], Gold: [], Platinum: [], Legendary: [], Celestial: [] },
@@ -240,160 +240,200 @@ function pushLockoutStateToCloud() {
 // ==========================================
 // 🕹️ CS:GO CAROUSEL ENGINE LOGIC
 // ==========================================
-function spinLootBox() {
-    const tier = tierSelect.value;
-    const category = categorySelect.value;
-    const subCategory = subCategorySelect.value;
-    
-    if (serverStates[tier] === false || category === "none") return; 
-    const winningPool = lootTables[category]?.[subCategory]?.[tier];
-    if (!winningPool || winningPool.length === 0) { alert(`No items programmed inside the [${tier}] table.`); return; }
-    
-    // ==========================================
-    // 🎲 WEIGHTED RANDOM SELECTION ENGINE
-    // ==========================================
-    // Calculate the total weight sum of all items in this pool
-    let totalWeight = 0;
-    winningPool.forEach(item => {
-        // Fallback to 1 if you forget to add a weight property to an item
-        totalWeight += (item.weight || 1); 
-    });
-
-    // Roll a random number between 0 and the total weight sum
-    let randomRoll = Math.random() * totalWeight;
-    let winnerItem = winningPool[0];
-
-    // Loop through the items and subtract their weights until we hit 0
-    for (let i = 0; i < winningPool.length; i++) {
-        randomRoll -= (winningPool[i].weight || 1);
-        if (randomRoll <= 0) {
-            winnerItem = winningPool[i];
-            break;
-        }
-    }
-    // ==========================================
-
-    spinBtn.disabled = true; lootDisplayContainer.classList.add('hidden'); placeholderText.classList.remove('hidden');
-    placeholderText.textContent = "Unboxing crate...";
-    
-    scroller.innerHTML = ""; scroller.style.transition = "none"; scroller.style.transform = "translateX(0px)";
-    const totalItemsCount = 30; const winningIndex = 25; scroller.offsetHeight;
-
-    for (let i = 0; i < totalItemsCount; i++) {
-        let displayItem, displayTier;
-        if (i === winningIndex) { displayItem = winnerItem; displayTier = tier; }
-        else {
-            displayTier = tierList[Math.floor(Math.random() * tierList.length)];
-            const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
-            displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
-        }
-        const slot = document.createElement('div'); slot.className = `carousel-item border-${displayTier}`;
-        const img = document.createElement('img'); img.src = displayItem.image; slot.appendChild(img); scroller.appendChild(slot);
-    }
-    
-    const itemTotalWidth = 116; const containerWidth = document.querySelector('.case-container').offsetWidth;
-    const centerOffset = containerWidth / 2; const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
-    const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
-    
-    scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
-    scroller.style.transform = `translateX(-${targetDistance}px)`;
-    
-    setTimeout(() => {
-        checkActiveTierStatus(); placeholderText.classList.add('hidden'); lootDisplayContainer.classList.remove('hidden');
-        lootDisplayContainer.className = "loot-display tier-" + tier; itemRatingBadge.className = "rating-badge badge-" + tier;
-        itemRatingBadge.textContent = tier + " Quality"; itemName.textContent = winnerItem.name;
-        itemImage.src = winnerItem.image; itemAbility.textContent = winnerItem.ability;
-    }, 4500);
-}
-
-
-
-
-// ==========================================
-// 🛡️ SECURITY MODULE AND DRAGGABLE ENGINES
-// ==========================================
-adminTriggerBtn.addEventListener('click', () => {
-    loginModal.classList.remove('hidden');
-    loginStatusMsg.className = "status-msg";
-    loginStatusMsg.textContent = "";
-    adminIdInput.value = "";
-    adminPassInput.value = "";
-});
-
-loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
-
-loginSubmitBtn.addEventListener('click', () => {
-    const enteredID = adminIdInput.value.trim();
-    const enteredPass = adminPassInput.value.trim();
-    
-    if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
-        loginStatusMsg.className = "status-msg status-success";
-        loginStatusMsg.textContent = "Successful, logging in...";
+    function spinLootBox() {
+        const tier = tierSelect.value;
+        const category = categorySelect.value;
+        const subCategory = subCategorySelect.value;
         
+        if (serverStates[tier] === false || category === "none") return;
+        const winningPool = lootTables[category]?.[subCategory]?.[tier];
+        if (!winningPool || winningPool.length === 0) {
+            alert(`No items programmed inside the [${tier}] table.`);
+            return;
+        }
+
+        // Calculate the total combined weights of all matching table items
+        let totalWeight = 0;
+        winningPool.forEach(item => {
+            totalWeight += (item.weight || 1); // Defaults to a weight of 1 if you forget to write it
+        });
+
+        // Fire a random decimal roll marker inside the total boundary limits
+        let randomRoll = Math.random() * totalWeight;
+        let winnerItem = winningPool[0]; // Baseline protection map fallback
+
+        // Loop array and subtract weights to trap the rolled target item card step
+        for (let i = 0; i < winningPool.length; i++) {
+            randomRoll -= (winningPool[i].weight || 1);
+            if (randomRoll <= 0) {
+                winnerItem = winningPool[i];
+                break;
+            }
+        }
+
+        // Lock button interaction frames and trigger unboxing panel masks layout
+        spinBtn.disabled = true;
+        lootDisplayContainer.classList.add('hidden');
+        placeholderText.classList.remove('hidden');
+        placeholderText.textContent = "Unboxing crate...";
+        
+        scroller.innerHTML = "";
+        scroller.style.transition = "none";
+        scroller.style.transform = "translateX(0px)";
+        
+        const totalItemsCount = 30;
+        const winningIndex = 25;
+        scroller.offsetHeight; // Forces a browser view layout repaint refresh frame
+
+        // Build the background filler track rows side-by-side array
+        for (let i = 0; i < totalItemsCount; i++) {
+            let displayItem, displayTier;
+            if (i === winningIndex) {
+                displayItem = winnerItem;
+                displayTier = tier;
+            } else {
+                displayTier = tierList[Math.floor(Math.random() * tierList.length)];
+                const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
+                displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
+            }
+            const slot = document.createElement('div');
+            slot.className = `carousel-item border-${displayTier}`;
+            
+            const img = document.createElement('img');
+            img.src = displayItem.image;
+            slot.appendChild(img);
+            scroller.appendChild(slot);
+        }
+
+        const itemTotalWidth = 116;
+        const containerWidth = document.querySelector('.case-container').offsetWidth;
+        const centerOffset = containerWidth / 2;
+        const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
+        const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
+
+        // Execute the 4.5-second easing speed strip curve transform transition
+        scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
+        scroller.style.transform = `translateX(-${targetDistance}px)`;
+
         setTimeout(() => {
-            loginModal.classList.add('hidden');
-            adminPanel.classList.remove('hidden');
-            adminPanel.style.top = "100px";
-            adminPanel.style.right = "50px";
-            adminPanel.style.left = "auto";
-        }, 1200);
-    } else {
-        loginStatusMsg.className = "status-msg status-error";
-        loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
+            checkActiveTierStatus();
+            placeholderText.classList.add('hidden');
+            lootDisplayContainer.classList.remove('hidden');
+            
+            lootDisplayContainer.className = "loot-display tier-" + tier;
+            itemRatingBadge.className = "rating-badge badge-" + tier;
+            itemRatingBadge.textContent = tier.replace('_', ' ') + " Quality";
+            itemName.textContent = winnerItem.name;
+            itemImage.src = winnerItem.image;
+            itemAbility.textContent = winnerItem.ability;
+        }, 4500);
     }
-});
 
-closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
-
-// Bind Tiers Toggle Actions
-tierList.forEach(t => {
-    document.getElementById(`sw-${t}`).addEventListener('change', (e) => {
-        serverStates[t] = e.target.checked;
-        pushLockoutStateToCloud();
-        checkActiveTierStatus();
-    });
-});
-
-// Bind Categories Toggle Actions
-categoriesList.forEach(c => {
-    document.getElementById(`sw-cat-${c}`).addEventListener('change', (e) => {
-        serverStates[`cat_${c}`] = e.target.checked;
-        pushLockoutStateToCloud();
-        updateCategoryDropdownOptions();
-    });
-});
-
-let isDragging = false;
-let currentX, currentY, initialX, initialY;
-let xOffset = 0, yOffset = 0;
-
-adminPanelHeader.addEventListener('mousedown', dragStart);
-document.addEventListener('mousemove', drag);
-document.addEventListener('mouseup', dragEnd);
-
-function dragStart(e) {
-    initialX = e.clientX - xOffset;
-    initialY = e.clientY - yOffset;
-    if (e.target === adminPanelHeader) isDragging = true;
-}
-
-function drag(e) {
-    if (isDragging) {
-        e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-        xOffset = currentX;
-        yOffset = currentY;
-        adminPanel.style.transform = `translate(${currentX}px, ${currentY}px)`;
+    function getFillerItemPool(cat, sub, tier) {
+        if (cat === "none") return null;
+        for (let c in lootTables) {
+            for (let s in lootTables[c]) {
+                if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier];
+                if (lootTables[c][s][tier]?.length > 0) return lootTables[c][s][tier];
+            }
+        }
+        return null;
     }
-}
 
-function dragEnd() {
-    initialX = currentX;
-    initialY = currentY;
-    isDragging = false;
-}
+    // ==========================================
+    // 🔒 ADMIN AUTH & MODAL ACCESS LISTENERS
+    // ==========================================
+    if (adminTriggerBtn) {
+        adminTriggerBtn.addEventListener('click', () => {
+            loginModal.classList.remove('hidden');
+            loginStatusMsg.className = "status-msg";
+            loginStatusMsg.textContent = "";
+            adminIdInput.value = "";
+            adminPassInput.value = "";
+        });
+    }
 
-categorySelect.addEventListener('change', updateSubCategories);
-tierSelect.addEventListener('change', checkActiveTierStatus);
-spinBtn.addEventListener('click', spinLootBox);
+    if (loginCancelBtn) loginCancelBtn.addEventListener('click', () => loginModal.classList.add('hidden'));
+
+    if (loginSubmitBtn) {
+        loginSubmitBtn.addEventListener('click', () => {
+            const enteredID = adminIdInput.value.trim();
+            const enteredPass = adminPassInput.value.trim();
+            
+            if (enteredID === MASTER_ID && enteredPass === MASTER_PASSWORD) {
+                loginStatusMsg.className = "status-msg status-success";
+                loginStatusMsg.textContent = "Successful, logging in...";
+                setTimeout(() => {
+                    loginModal.classList.add('hidden');
+                    adminPanel.classList.remove('hidden');
+                    adminPanel.style.top = "100px";
+                    adminPanel.style.right = "50px";
+                    adminPanel.style.left = "auto";
+                }, 1200);
+            } else {
+                loginStatusMsg.className = "status-msg status-error";
+                loginStatusMsg.textContent = "Invalid Credentials. Access Denied.";
+            }
+        });
+    }
+
+    if (closePanelBtn) closePanelBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
+
+    tierList.forEach(t => {
+        const el = document.getElementById(`sw-${t}`);
+        if (el) {
+            el.addEventListener('change', (e) => {
+                serverStates[t] = e.target.checked;
+                pushLockoutStateToCloud();
+                checkActiveTierStatus();
+            });
+        }
+    });
+
+    categoriesList.forEach(c => {
+        const el = document.getElementById(`sw-cat-${c}`);
+        if (el) {
+            el.addEventListener('change', (e) => {
+                serverStates[`cat_${c}`] = e.target.checked;
+                pushLockoutStateToCloud();
+                updateCategoryDropdownOptions();
+            });
+        }
+    });
+
+    let isDragging = false;
+    let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+
+    if (adminPanelHeader) {
+        adminPanelHeader.addEventListener('mousedown', (e) => {
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+            if (e.target === adminPanelHeader) isDragging = true;
+        });
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging && adminPanel) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            xOffset = currentX;
+            yOffset = currentY;
+            adminPanel.style.transform = `translate(${currentX}px, ${currentY}px)`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        initialX = currentX;
+        initialY = currentY;
+        isDragging = false;
+    });
+
+    if (categorySelect) categorySelect.addEventListener('change', updateSubCategories);
+    if (tierSelect) tierSelect.addEventListener('change', checkActiveTierStatus);
+    if (spinBtn) spinBtn.addEventListener('click', spinLootBox);
+
+    updateCategoryDropdownOptions();
+    setInterval(syncFromCloudDatabase, 3000);
+});
+
