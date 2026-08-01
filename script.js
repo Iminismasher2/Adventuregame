@@ -438,15 +438,3 @@ function dragEnd() {
 categorySelect.addEventListener('change', updateSubCategories);
 tierSelect.addEventListener('change', checkActiveTierStatus);
 spinBtn.addEventListener('click', spinLootBox);
-
-// Start systems execution engines loops
-updateCategoryDropdownOptions();
-setInterval(syncFromCloudDatabase, 3000);
-
-            updateCategoryDropdownOptions();
-            // Paste this line directly here to wake up the uniques tracking engine:
-            setInterval(syncUniqueWipeStateFromCloud, 3000); 
-            setInterval(syncFromCloudDatabase, 3000);
-        });
-    </script>
-
