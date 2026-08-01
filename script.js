@@ -237,11 +237,8 @@ function pushLockoutStateToCloud() {
     }).catch(err => console.log("Database write error:", err));
 }
 
-// ==========================================
-// 🕹️ CS:GO CAROUSEL ENGINE LOGIC
-// ==========================================
     // ==========================================
-    // 🕹️ DECIMAL-SAFE WEIGHTED SPIN MECHANICS
+    // 🕹️ DECIMAL-SAFE SPIN ENGINE & FALLBACK FILLERS
     // ==========================================
     function spinLootBox() {
         const tier = tierSelect.value;
@@ -252,27 +249,29 @@ function pushLockoutStateToCloud() {
         const winningPool = lootTables[category]?.[subCategory]?.[tier];
         if (!winningPool || winningPool.length === 0) { alert(`No items programmed inside the [${tier}] table.`); return; }
         
-        // 1. Calculate the total combined weights (Safe for decimals like 0.3 or 0.01)
+        // 1. Calculate the total combined weights safely
         let totalWeight = 0;
         winningPool.forEach(item => {
-            totalWeight += (parseFloat(item.weight) || 1.0); 
+            let itemWeight = parseFloat(item.weight);
+            totalWeight += (isNaN(itemWeight) || itemWeight <= 0) ? 1.0 : itemWeight; 
         });
 
-        // 2. Pick a random number between 0 and your total weight sum
+        // 2. Pick a random roll threshold
         let randomRoll = Math.random() * totalWeight;
-        let winnerItem = winningPool[0]; // Baseline protection fallback
+        let winnerItem = winningPool; // Strict array baseline protection fallback
 
-        // 3. Accumulate weights upward. This prevents decimal math calculation crashes!
+        // 3. Accumulate weights upward safely for decimal scales
         let weightAccumulator = 0;
         for (let i = 0; i < winningPool.length; i++) {
-            weightAccumulator += (parseFloat(winningPool[i].weight) || 1.0);
+            let itemWeight = parseFloat(winningPool[i].weight);
+            weightAccumulator += (isNaN(itemWeight) || itemWeight <= 0) ? 1.0 : itemWeight;
             if (randomRoll <= weightAccumulator) {
                 winnerItem = winningPool[i];
                 break;
             }
         }
 
-        // Lock button interaction frames and trigger unboxing panel masks layout
+        // Lock interface switches and reset viewport frames
         spinBtn.disabled = true; 
         lootDisplayContainer.classList.add('hidden'); 
         placeholderText.classList.remove('hidden');
@@ -284,9 +283,9 @@ function pushLockoutStateToCloud() {
         
         const totalItemsCount = 30; 
         const winningIndex = 25; 
-        scroller.offsetHeight; // Forces a browser view layout repaint refresh frame
+        scroller.offsetHeight; // Forces absolute browser layout repaint refresh frame
 
-        // Build the background filler track rows side-by-side array
+        // 4. Build tracking loop with strict object verification
         for (let i = 0; i < totalItemsCount; i++) {
             let displayItem, displayTier;
             if (i === winningIndex) { 
@@ -295,8 +294,15 @@ function pushLockoutStateToCloud() {
             } else {
                 displayTier = tierList[Math.floor(Math.random() * tierList.length)];
                 const fillerPool = getFillerItemPool(category, subCategory, displayTier) || winningPool;
-                displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)];
+                displayItem = fillerPool[Math.floor(Math.random() * fillerPool.length)] || winnerItem;
             }
+            
+            // Defends track rendering logic from crashing if an item array path turns up null
+            if (!displayItem || !displayItem.image) {
+                displayItem = winnerItem;
+                displayTier = tier;
+            }
+
             const slot = document.createElement('div'); 
             slot.className = `carousel-item border-${displayTier}`;
             const img = document.createElement('img'); 
@@ -311,7 +317,7 @@ function pushLockoutStateToCloud() {
         const randomInnerVariance = Math.floor(Math.random() * 40) + 35;
         const targetDistance = (winningIndex * itemTotalWidth) - centerOffset + randomInnerVariance;
         
-        // Execute the 4.5-second easing speed strip curve transform transition
+        // Launch layout track roll
         scroller.style.transition = "transform 4.5s cubic-bezier(0.1, 0.6, 0.15, 1)";
         scroller.style.transform = `translateX(-${targetDistance}px)`;
         
@@ -327,6 +333,18 @@ function pushLockoutStateToCloud() {
             itemImage.src = winnerItem.image; 
             itemAbility.textContent = winnerItem.ability;
         }, 4500);
+    }
+
+    // 🌟 STANDALONE LOOKUP ENGINE (Moved safely outside of spinLootBox block)
+    function getFillerItemPool(cat, sub, tier) {
+        if (cat === "none") return null;
+        for (let c in lootTables) { 
+            for (let s in lootTables[c]) { 
+                if (lootTables[cat]?.[sub]?.[tier]?.length > 0) return lootTables[cat][sub][tier]; 
+                if (lootTables[c][s][tier]?.length > 0) return lootTables[c][s][tier]; 
+            } 
+        }
+        return null;
     }
 
 
